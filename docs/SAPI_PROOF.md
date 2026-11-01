@@ -136,7 +136,9 @@ the same voice through `.NET System.Speech` also spoke. The panel's exact
 preview sentence also spoke through direct machine-wide SAPI. Thus the screenshot is
 a Speech Properties preview compatibility failure, not evidence that the
 machine-wide token or model cannot synthesize. The control panel's specific
-failure has not yet been traced.
+failure has not yet been traced. Direct asynchronous `SAPI.SpVoice.Speak`
+also completed with both `SPF_ASYNC` and `SPF_ASYNC | SPF_PURGEBEFORESPEAK`,
+so asynchronous speaking alone does not reproduce the panel failure.
 
 An earlier isolated test setting the OneCore default to Paradee moved Paradee
 to the first position in SAPI OneCore token enumeration, while WinRT
