@@ -126,11 +126,14 @@ control shows the Chrome failure is not yet attributable to a Paradee-only
 registration or engine defect. We still need to identify which voice source
 this Chrome reading-mode path actually selects on this machine.
 
-Speech Properties listed `Kokoro Michael (en-US)` but its Preview Voice button
-reported "This voice cannot be played" in the user's test. Kokoro's own setup
+Speech Properties listed the Kokoro voices, but none passed its Preview Voice
+button in the user's test; `Kokoro Michael (en-US)` reported "This voice cannot
+be played." Microsoft and Paradee voices did preview in the same panel.
+Kokoro's own setup
 test selected a per-user token, so we separately tested the machine-wide
 `KokoroMichael` classic SAPI token through `SAPI.SpVoice`; it spoke. Selecting
-the same voice through `.NET System.Speech` also spoke. Thus the screenshot is
+the same voice through `.NET System.Speech` also spoke. The panel's exact
+preview sentence also spoke through direct machine-wide SAPI. Thus the screenshot is
 a Speech Properties preview compatibility failure, not evidence that the
 machine-wide token or model cannot synthesize. The control panel's specific
 failure has not yet been traced.
