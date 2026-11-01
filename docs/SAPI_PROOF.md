@@ -113,6 +113,17 @@ Microsoft voices. The previous default was restored after that test. Use
 `scripts/set-onecore-default.ps1` for a reversible Chrome reading-mode test;
 actual Chrome and Edge app playback remains unverified.
 
+Chrome reading mode on the user's page was grouped under English (United
+States). Selecting its generic "System text-to-speech voice" still played
+Microsoft David while Paradee's only token was labeled en-GB. As a focused
+experiment, machine registration now adds a second token labeled
+`Paradee bm_fable (British accent, en-US selection)` with language `409`.
+Both tokens point at the same native engine and model. The alias enumerated
+and played through SAPI COM; setting it as the OneCore default moved it to
+the first position. Chrome reading-mode playback with this alias is awaiting
+a full Chrome restart and user test. Restore the previous OneCore default
+with `scripts/set-onecore-default.ps1 -Restore` after the test.
+
 ## Remaining gates
 
 - Listen to matched native and upstream `bm_fable` samples and check

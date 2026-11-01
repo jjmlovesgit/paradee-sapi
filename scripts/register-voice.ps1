@@ -7,10 +7,13 @@ param(
 $ErrorActionPreference = 'Stop'
 $clsid = '{14A9D4B6-B47D-46FB-B319-6067CAFB2AD9}'
 $tokenName = 'ParadeeSapiBmFable'
+$aliasTokenName = 'ParadeeSapiBmFableEnUs'
 $registryRoot = if ($Scope -eq 'LocalMachine') { 'Registry::HKEY_LOCAL_MACHINE' } else { 'Registry::HKEY_CURRENT_USER' }
 $clsidKey = "$registryRoot\SOFTWARE\Classes\CLSID\$clsid"
 $voiceKey = "$registryRoot\SOFTWARE\Microsoft\Speech\Voices\Tokens\$tokenName"
 $oneCoreKey = "$registryRoot\SOFTWARE\Microsoft\Speech_OneCore\Voices\Tokens\$tokenName"
+$aliasVoiceKey = "$registryRoot\SOFTWARE\Microsoft\Speech\Voices\Tokens\$aliasTokenName"
+$aliasOneCoreKey = "$registryRoot\SOFTWARE\Microsoft\Speech_OneCore\Voices\Tokens\$aliasTokenName"
 
 if ($Scope -eq 'LocalMachine') {
     $principal = [Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()
@@ -20,6 +23,15 @@ if ($Scope -eq 'LocalMachine') {
 }
 
 if ($Uninstall) {
+    if ($Scope -eq 'LocalMachine') {
+        foreach ($aliasKey in @($aliasOneCoreKey, $aliasVoiceKey)) {
+            if (Test-Path -LiteralPath $aliasKey) {
+                $registeredClsid = (Get-ItemProperty -LiteralPath $aliasKey -Name CLSID -ErrorAction Stop).CLSID
+                if ($registeredClsid -ne $clsid) { throw 'Alias token belongs to another engine; refusing removal.' }
+                Remove-Item -LiteralPath $aliasKey -Recurse -Force
+            }
+        }
+    }
     if ($Scope -eq 'LocalMachine' -and (Test-Path -LiteralPath $oneCoreKey)) {
         $registeredClsid = (Get-ItemProperty -LiteralPath $oneCoreKey -Name CLSID -ErrorAction Stop).CLSID
         if ($registeredClsid -ne $clsid) { throw 'OneCore token belongs to another engine; refusing removal.' }
@@ -78,7 +90,23 @@ if ($Scope -eq 'LocalMachine') {
     foreach ($key in $attrs.Keys) {
         New-ItemProperty -LiteralPath "$oneCoreKey\Attributes" -Name $key -Value $attrs[$key] -PropertyType String -Force | Out-Null
     }
+    $aliasDisplay = 'Paradee bm_fable (British accent, en-US selection)'
+    $aliasAttrs = $attrs.Clone()
+    $aliasAttrs.Name = $aliasDisplay
+    $aliasAttrs.VoiceName = $aliasDisplay
+    $aliasAttrs.Language = '409'
+    foreach ($aliasKey in @($aliasVoiceKey, $aliasOneCoreKey)) {
+        New-Item -Path "$aliasKey\Attributes" -Force | Out-Null
+        Set-Item -LiteralPath $aliasKey -Value $aliasDisplay
+        New-ItemProperty -LiteralPath $aliasKey -Name CLSID -Value $clsid -PropertyType String -Force | Out-Null
+        New-ItemProperty -LiteralPath $aliasKey -Name VoiceName -Value bm_fable -PropertyType String -Force | Out-Null
+        New-ItemProperty -LiteralPath $aliasKey -Name AssetsDir -Value $assets -PropertyType String -Force | Out-Null
+        foreach ($key in $aliasAttrs.Keys) {
+            New-ItemProperty -LiteralPath "$aliasKey\Attributes" -Name $key -Value $aliasAttrs[$key] -PropertyType String -Force | Out-Null
+        }
+    }
 }
 Write-Host "Registered Paradee bm_fable ($Scope)"
 Write-Host "Token: $voiceKey"
 if ($Scope -eq 'LocalMachine') { Write-Host "OneCore token: $oneCoreKey" }
+if ($Scope -eq 'LocalMachine') { Write-Host "US-selection alias: $aliasOneCoreKey" }
