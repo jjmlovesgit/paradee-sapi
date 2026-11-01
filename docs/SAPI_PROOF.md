@@ -98,6 +98,11 @@ comparison, but the current bridge build excludes the HTTP path.
   Next isolate Discord's TTS path and test Chromium `speechSynthesis.getVoices()`
   before concluding whether a registry/selection fix is possible. Do not
   switch the OneCore default to Paradee based on the WinRT list.
+- Microsoft Edge's `speechSynthesis.getVoices()` returned Microsoft local
+  David, Mark, and Zira plus online Microsoft voices, but no Paradee. The
+  user also did not see Paradee in Edge Read aloud's picker. Thus the current
+  registration does not meet the Edge Read aloud target. A local diagnostic
+  HTML page under ignored `build/diagnostics/` produced the browser list.
 
 ## Remaining gates
 
