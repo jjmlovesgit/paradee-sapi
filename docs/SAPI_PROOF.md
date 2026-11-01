@@ -139,6 +139,12 @@ machine-wide token or model cannot synthesize. The control panel's specific
 failure has not yet been traced. Direct asynchronous `SAPI.SpVoice.Speak`
 also completed with both `SPF_ASYNC` and `SPF_ASYNC | SPF_PURGEBEFORESPEAK`,
 so asynchronous speaking alone does not reproduce the panel failure.
+After a Windows reboot on the same desktop, Speech Properties previewed
+Kokoro Michael without the error and the user heard the voice. The earlier
+preview failure was therefore transient across the reboot; its immediate
+cause remains unknown. Chrome Reading mode was not retested after the reboot.
+The temporary Kokoro Heart OneCore default used to prepare that test was
+restored to Microsoft David when the user could not run it.
 
 An earlier isolated test setting the OneCore default to Paradee moved Paradee
 to the first position in SAPI OneCore token enumeration, while WinRT
