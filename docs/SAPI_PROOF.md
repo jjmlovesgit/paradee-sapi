@@ -98,11 +98,16 @@ comparison, but the current bridge build excludes the HTTP path.
   Next isolate Discord's TTS path and test Chromium `speechSynthesis.getVoices()`
   before concluding whether a registry/selection fix is possible. Do not
   switch the OneCore default to Paradee based on the WinRT list.
-- Microsoft Edge's `speechSynthesis.getVoices()` returned Microsoft local
-  David, Mark, and Zira plus online Microsoft voices, but no Paradee. The
-  user also did not see Paradee in Edge Read aloud's picker. Thus the current
-  registration does not meet the Edge Read aloud target. A local diagnostic
-  HTML page under ignored `build/diagnostics/` produced the browser list.
+- In an earlier test, Microsoft Edge's `speechSynthesis.getVoices()` returned
+  Microsoft local David, Mark, and Zira plus online Microsoft voices, but no
+  Paradee. A local diagnostic HTML page under ignored `build/diagnostics/`
+  produced that list. After the Windows reboot, the user showed Edge Read
+  Aloud's voice picker listing Paradee `bm_fable` and Kokoro Emma, Heart,
+  Michael, and Bella, and reported that Edge can play both engines. Edge
+  voice discovery and basic playback therefore pass on this desktop. The
+  earlier negative observation was transient or came from a different voice
+  enumeration state; its precise cause is unknown. Paradee's punctuation and
+  phrasing are still below the desired quality.
 - Chrome reading mode offered a generic "System text-to-speech voice" but
   played Microsoft David when the OneCore default pointed at the en-GB
   Paradee token. An experimental en-US alias of the same British voice was
@@ -160,6 +165,12 @@ for a reversible OneCore test.
 - Test cold and warm latency, stop/pause behavior, sentence boundaries, and
   longer text in real applications. The current tokenizer caps a synthesis
   call at 510 phoneme tokens, so long inputs need chunking before acceptance.
+- Improve Edge Read Aloud phrasing: the current SAPI bridge concatenates all
+  SAPI text fragments into one synthesis request and ignores silence actions.
+  The native eSpeak frontend only re-appends punctuation if it is at the end
+  of the whole request. Split into bounded sentences, preserve punctuation
+  and SAPI pauses, and compare audible phrasing with upstream Paradee before
+  treating the voice as reader-ready.
 - Confirm the OneCore token appears and plays in each target Read Aloud picker;
   category enumeration alone does not prove app compatibility.
 - Make a self-contained offline installer, include license notices and any

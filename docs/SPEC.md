@@ -52,7 +52,9 @@ built-in Read aloud button.
    phonemization and compare it by ear with the upstream sample.
 3. **SAPI:** after installation, enumerate and select the registered voice in
    a simple SAPI test application; read text audibly; test rate, stop, and
-   multi-paragraph input without truncation.
+   multi-paragraph input without truncation. Check audible pauses and phrasing
+   at commas, sentence endings, questions, and paragraph boundaries against
+   the upstream `bm_fable` voice.
 4. **Offline and privacy:** disconnect the laptop and repeat synthesis. Inspect
    the speech process for network requests and unintended text/audio files.
 5. **Resources:** record installer/download size, installed size, idle and
@@ -63,8 +65,10 @@ built-in Read aloud button.
    directly for a shared worker, or the increase over the host app baseline
    for an in-process engine. Revisit these limits after native profiling.
 6. **Applications:** test Office **Speak** and Excel **Speak Cells** first.
-   Treat Word/Outlook **Read Aloud**, Discord, and Narrator as separate
-   compatibility gates because they may use different voice-selection paths.
+   Edge Read Aloud now discovers and plays Paradee on the development desktop;
+   retain its punctuation and long-passage quality as separate gates. Treat
+   Word/Outlook **Read Aloud**, Discord, and Narrator as separate compatibility
+   gates because they may use different voice-selection paths.
 
 ## Implementation sequence
 
@@ -91,7 +95,9 @@ On the development desktop, the native x64 SAPI engine rendered a non-silent
 WAV and `System.Speech.GetInstalledVoices()` listed `Paradee bm_fable` after
 machine-wide registration. `SelectVoice` completed playback without the
 earlier Python server. Classic Windows Speech Properties also listed and
-played Paradee. Discord desktop TTS played Microsoft David despite Paradee
+played Paradee. After a Windows reboot, Edge Read Aloud listed and played
+Paradee alongside Kokoro voices, although Paradee's punctuation and phrasing
+need improvement. Discord desktop TTS played Microsoft David despite Paradee
 being the classic SAPI default; Windows' WinRT speech API enumerated only
 Microsoft voices even with a Paradee OneCore token present. WinRT's Microsoft
 signature rule does not establish which API Discord uses, so test Chromium
