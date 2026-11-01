@@ -46,8 +46,9 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-sapi-direct.p
 The direct test succeeded on the development desktop and produced a non-silent
 WAV. With machine-wide registration, `System.Speech.GetInstalledVoices()` also
 listed `Paradee bm_fable`, and `SelectVoice('Paradee bm_fable')` played speech.
-This establishes classic SAPI discovery and synthesis on this machine; Office,
-Discord, Narrator, and a clean laptop still need separate checks.
+The user confirmed hearing the voice on this desktop. This establishes classic
+SAPI discovery and audible synthesis on this machine; Office, Discord,
+Narrator, and a clean laptop still need separate checks.
 
 Development baseline: Windows 11 Home x64, build 26300, AMD Ryzen 9 9950X,
 approximately 64 GiB RAM. Visual Studio 2022 C++ tools built the bridge DLL
