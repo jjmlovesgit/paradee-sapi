@@ -1,12 +1,11 @@
-param([switch] $Restore, [switch] $EnUsAlias)
+param([switch] $Restore)
 
 $ErrorActionPreference = 'Stop'
 $repo = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 $backup = Join-Path $repo '.cache\onecore-default-before-paradee.txt'
 $key = 'Registry::HKEY_CURRENT_USER\SOFTWARE\Microsoft\Speech_OneCore\Voices'
-$tokenName = if ($EnUsAlias) { 'ParadeeSapiBmFableEnUs' } else { 'ParadeeSapiBmFable' }
-$token = "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Speech_OneCore\Voices\Tokens\$tokenName"
-$tokenKey = "Registry::HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Speech_OneCore\Voices\Tokens\$tokenName"
+$token = 'HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Speech_OneCore\Voices\Tokens\ParadeeSapiBmFable'
+$tokenKey = 'Registry::HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Speech_OneCore\Voices\Tokens\ParadeeSapiBmFable'
 
 if ($Restore) {
     if (-not (Test-Path -LiteralPath $backup)) { throw "No saved default at $backup" }
