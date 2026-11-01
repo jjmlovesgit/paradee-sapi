@@ -73,8 +73,11 @@ footprint must be measured and optimized.
 On the development desktop, the native x64 SAPI engine rendered a non-silent
 WAV and `System.Speech.GetInstalledVoices()` listed `Paradee bm_fable` after
 machine-wide registration. `SelectVoice` completed playback without the
-earlier Python server. A OneCore token also enumerates, but no target Read
-Aloud picker has been tested. The native DLL has no WinHTTP import. The DLL,
+earlier Python server. Classic Windows Speech Properties also listed and
+played Paradee. Discord desktop TTS played Microsoft David despite Paradee
+being the classic SAPI default; the Windows modern speech API enumerated only
+Microsoft voices even with a Paradee OneCore token present. The native DLL has
+no WinHTTP import. The DLL,
 ONNX Runtime, int8 model, and eSpeak assets total about 42.8 MiB unpacked.
 The SAPI PowerShell host rose from about 80 MiB working set before voice use
 to about 149 MiB after speech, with a sampled peak of about 176 MiB. These

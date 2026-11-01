@@ -84,6 +84,18 @@ The earlier Python/loopback proof used about 421 MiB working set and 1.26 GiB
 private committed memory in its warm backend. Its source remains for
 comparison, but the current bridge build excludes the HTTP path.
 
+## Application compatibility observed
+
+- Classic Windows Speech Properties lists `Paradee bm_fable` and its Preview
+  Voice button plays it. The per-user classic SAPI default is Paradee.
+- Discord desktop TTS played Microsoft David in the user's test, so Discord
+  compatibility has **not** been achieved. The per-user OneCore default is
+  David. `Windows.Media.SpeechSynthesis.SpeechSynthesizer.AllVoices` enumerated
+  only Microsoft David, Zira, and Mark on this desktop, despite the Paradee
+  OneCore registry token. This suggests the OneCore token alone does not make
+  this SAPI engine available to modern app speech APIs. Do not switch the
+  OneCore default to Paradee until that API can instantiate it successfully.
+
 ## Remaining gates
 
 - Listen to matched native and upstream `bm_fable` samples and check
