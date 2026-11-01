@@ -27,6 +27,23 @@ application workflow needs its own privacy and offline validation.
 - Reliability: meaningful error reporting, repeatable installation and
   uninstallation, and operation after the network is disconnected.
 
+## Cross-application reading requirement
+
+Deliver reading of selected text in browsers and desktop apps through one
+installed Windows executable, without a browser extension or native-messaging
+host. The executable should provide an explicit global hotkey, capture only
+the current selection where the source app permits copying, synthesize it
+locally with Paradee, and offer stop and rate controls. Preserve the user's
+clipboard when a copy-based fallback is needed. Test on Edge, Discord, and
+Word with short and multi-paragraph selections.
+
+SAPI registration remains useful for apps that select SAPI voices. It does
+not make Paradee appear in every application's own voice picker. In
+particular, Edge's built-in Read aloud picker did not list Paradee on the
+development desktop. The installed executable's selected-text reader is a
+separate user action and must not be described as integration with Edge's
+built-in Read aloud button.
+
 ## Acceptance gates
 
 1. **Baseline:** record Windows version, architecture, CPU, RAM, and native
