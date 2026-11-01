@@ -92,9 +92,12 @@ comparison, but the current bridge build excludes the HTTP path.
   compatibility has **not** been achieved. The per-user OneCore default is
   David. `Windows.Media.SpeechSynthesis.SpeechSynthesizer.AllVoices` enumerated
   only Microsoft David, Zira, and Mark on this desktop, despite the Paradee
-  OneCore registry token. This suggests the OneCore token alone does not make
-  this SAPI engine available to modern app speech APIs. Do not switch the
-  OneCore default to Paradee until that API can instantiate it successfully.
+  OneCore registry token. Microsoft's WinRT API permits only Microsoft-signed
+  voices. This does not prove which API Discord calls: Chromium's Windows Web
+  Speech implementation enumerates SAPI and OneCore tokens through SAPI COM.
+  Next isolate Discord's TTS path and test Chromium `speechSynthesis.getVoices()`
+  before concluding whether a registry/selection fix is possible. Do not
+  switch the OneCore default to Paradee based on the WinRT list.
 
 ## Remaining gates
 

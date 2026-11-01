@@ -75,8 +75,10 @@ WAV and `System.Speech.GetInstalledVoices()` listed `Paradee bm_fable` after
 machine-wide registration. `SelectVoice` completed playback without the
 earlier Python server. Classic Windows Speech Properties also listed and
 played Paradee. Discord desktop TTS played Microsoft David despite Paradee
-being the classic SAPI default; the Windows modern speech API enumerated only
-Microsoft voices even with a Paradee OneCore token present. The native DLL has
+being the classic SAPI default; Windows' WinRT speech API enumerated only
+Microsoft voices even with a Paradee OneCore token present. WinRT's Microsoft
+signature rule does not establish which API Discord uses, so test Chromium
+Web Speech voice enumeration before choosing a Discord fix. The native DLL has
 no WinHTTP import. The DLL,
 ONNX Runtime, int8 model, and eSpeak assets total about 42.8 MiB unpacked.
 The SAPI PowerShell host rose from about 80 MiB working set before voice use
