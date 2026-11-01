@@ -84,6 +84,17 @@ The earlier Python/loopback proof used about 421 MiB working set and 1.26 GiB
 private committed memory in its warm backend. Its source remains for
 comparison, but the current bridge build excludes the HTTP path.
 
+For a provisional same-host comparison with Kokoro-SAPI's quantized model,
+fresh PowerShell processes each selected one machine-wide SAPI voice and
+rendered the same short sentence to a WAV file. Both started near 74 MiB
+working set. Paradee rose to 132.2 MiB after speech (about +58 MiB) and
+peaked at 236.1 MiB; Kokoro Michael rose to 307.9 MiB after speech (about
++234 MiB), also its observed peak. The Paradee model file is 8,462,119 bytes
+versus Kokoro's quantized 92,361,116-byte model file. This is one cold-process
+comparison of working set, not a benchmark of Edge memory or time to first
+audio; Kokoro's SAPI engine paces audio writes, so total call duration would
+not isolate model loading latency.
+
 ## Application compatibility observed
 
 - Classic Windows Speech Properties lists `Paradee bm_fable` and its Preview
