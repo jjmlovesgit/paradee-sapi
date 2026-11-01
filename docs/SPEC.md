@@ -60,11 +60,18 @@ application workflow needs its own privacy and offline validation.
 ## Current evidence and open design choices
 
 Upstream Paradee v1.2 provides four voices in one approximately 8.5 MB int8
-ONNX model. The existing Python runtime has synthesized `bm_fable` locally in
-this project's development folder with Hugging Face offline mode enabled.
-Its approximately 348 MiB virtual environment shows why the full distribution
-footprint must be measured and optimized. A physical network-disconnected
-test and SAPI integration have not yet happened.
+ONNX model. The Python runtime has synthesized `bm_fable` locally in this
+project's development folder with Hugging Face offline mode enabled. Its
+approximately 348 MiB virtual environment shows why the full distribution
+footprint must be measured and optimized.
+
+On the development desktop, a native x64 SAPI bridge built successfully and
+the per-user voice token rendered a non-silent WAV through SAPI. The local
+Paradee backend listens only on loopback. Normal voice-list discovery remains
+unverified: System.Speech did not enumerate the per-user token, and the
+machine-wide registration step was canceled at the Windows administrator
+prompt. A physical network-disconnected test and offline installer also remain
+open.
 
 Still to decide: exact SAPI registration scope and Windows API variants,
 32-bit application support, engine process architecture, packaging format,

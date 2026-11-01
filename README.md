@@ -9,8 +9,10 @@ through standard Windows speech interfaces. The intended use includes reading
 PII, confidential intellectual property, and regulated text without sending
 that text to a speech service.
 
-**Status:** specification and upstream engine smoke test. No SAPI adapter or
-Windows installer has been built yet. See [the working spec](docs/SPEC.md).
+**Status:** the first SAPI proof is under development on `codex/sapi-proof`.
+It uses a native bridge plus a warm, loopback-only Paradee Python process.
+There is no offline installer yet. See [the working spec](docs/SPEC.md) and
+[proof instructions](docs/SAPI_PROOF.md).
 
 ## Milestone 1
 
@@ -30,6 +32,10 @@ The local virtual environment, model cache, cloned upstream source, and audio
 samples are intentionally excluded from this repository. The future build
 instructions will pin upstream commits and model revisions and provide a fully
 offline installation path.
+
+The current proof requires its local process to be running while SAPI clients
+speak. That dependency is acceptable for checking compatibility, but the
+eventual installer must start the runtime automatically or host it directly.
 
 ## Attribution
 
