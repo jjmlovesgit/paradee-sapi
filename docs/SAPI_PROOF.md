@@ -103,6 +103,14 @@ comparison, but the current bridge build excludes the HTTP path.
   user also did not see Paradee in Edge Read aloud's picker. Thus the current
   registration does not meet the Edge Read aloud target. A local diagnostic
   HTML page under ignored `build/diagnostics/` produced the browser list.
+- Chrome reading mode offered a generic "System text-to-speech voice" but
+  played Microsoft David when the OneCore default pointed at the en-GB
+  Paradee token. An experimental en-US alias of the same British voice was
+  registered machine-wide and made the OneCore default; it enumerated and
+  played through SAPI COM, but the user still did not hear or see Paradee in
+  Chrome. The alias was removed and the previous David OneCore default was
+  restored. Chrome reading-mode compatibility is therefore unproven and the
+  registry/default-voice approach did not meet this app gate.
 
 Kokoro-SAPI's README describes Chrome reading mode as a supported use case.
 Its installer registers HKLM SAPI and OneCore tokens and sets the user's
