@@ -104,6 +104,15 @@ comparison, but the current bridge build excludes the HTTP path.
   registration does not meet the Edge Read aloud target. A local diagnostic
   HTML page under ignored `build/diagnostics/` produced the browser list.
 
+Kokoro-SAPI's README describes Chrome reading mode as a supported use case.
+Its installer registers HKLM SAPI and OneCore tokens and sets the user's
+OneCore `DefaultTokenId`. Our prototype had left that default at David. An
+isolated test setting it to Paradee moved Paradee to the first position in
+SAPI OneCore token enumeration, while WinRT `AllVoices` still returned only
+Microsoft voices. The previous default was restored after that test. Use
+`scripts/set-onecore-default.ps1` for a reversible Chrome reading-mode test;
+actual Chrome and Edge app playback remains unverified.
+
 ## Remaining gates
 
 - Listen to matched native and upstream `bm_fable` samples and check
