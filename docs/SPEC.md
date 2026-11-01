@@ -39,15 +39,19 @@ application workflow needs its own privacy and offline validation.
    the speech process for network requests and unintended text/audio files.
 5. **Resources:** record installer/download size, installed size, idle and
    speaking memory, CPU use, cold-start and warm-start time to first speech,
-   and speed on a representative passage. Set pass/fail thresholds after the
-   baseline measurements.
+   and speed on a representative passage. Provisional native-runtime target:
+   at most 150 MiB additional resident memory after the first utterance and
+   at most 250 MiB peak for representative sentences. Measure the process
+   directly for a shared worker, or the increase over the host app baseline
+   for an in-process engine. Revisit these limits after native profiling.
 6. **Applications:** test Office **Speak** and Excel **Speak Cells** first.
    Treat Word/Outlook **Read Aloud**, Discord, and Narrator as separate
    compatibility gates because they may use different voice-selection paths.
 
 ## Implementation sequence
 
-1. Validate the Windows toolchain and dependency packaging on the laptop.
+1. Validate the Windows toolchain and dependency packaging on the development
+   desktop; use the laptop for clean installation and acceptance testing.
 2. Decide whether the SAPI engine hosts inference in-process or uses a local
    worker. Compare startup cost, cancellation behavior, and total footprint.
 3. Implement SAPI voice registration and minimal synthesis for `bm_fable`.
@@ -74,10 +78,18 @@ working set and 1.26 GiB private committed memory, far above the desired
 lightweight product footprint. A physical network-disconnected test, Office
 and other application tests, and an offline installer remain open.
 
+An isolated Python process loading only the Paradee int8 ONNX session measured
+about 79 MiB working set; after a short inference it measured about 106 MiB.
+Importing NumPy alone accounted for roughly 755 MiB of private committed
+memory in this environment. These measurements suggest a compact native
+runtime could meet the provisional resident-memory target, but the native
+runtime has not yet been built or measured. Its phonemizer must preserve voice
+quality without the large Python stack.
+
 Still to decide: exact SAPI registration scope and Windows API variants,
 32-bit application support, engine process architecture, packaging format,
-numeric performance thresholds, and the product's public name. Resolve these
-through the laptop baseline and a minimal SAPI proof before broadening scope.
+final performance thresholds, and the product's public name. Resolve these
+through native profiling and the laptop baseline before broadening scope.
 
 ## Sources
 
