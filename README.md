@@ -9,10 +9,11 @@ through standard Windows speech interfaces. The intended use includes reading
 PII, confidential intellectual property, and regulated text without sending
 that text to a speech service.
 
-**Status:** the first SAPI proof is under development on `codex/sapi-proof`.
-It uses a native bridge plus a warm, loopback-only Paradee Python process.
-There is no offline installer yet. See [the working spec](docs/SPEC.md) and
-[proof instructions](docs/SAPI_PROOF.md).
+**Status:** the first SAPI proof works on the Windows development desktop.
+`Paradee bm_fable` appears in the installed voice list and speaks through
+`System.Speech`. The proof uses a native bridge plus a warm, loopback-only
+Paradee Python process. There is no offline installer yet. See
+[the working spec](docs/SPEC.md) and [proof instructions](docs/SAPI_PROOF.md).
 
 ## Milestone 1
 

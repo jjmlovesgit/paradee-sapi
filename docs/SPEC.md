@@ -66,12 +66,11 @@ approximately 348 MiB virtual environment shows why the full distribution
 footprint must be measured and optimized.
 
 On the development desktop, a native x64 SAPI bridge built successfully and
-the per-user voice token rendered a non-silent WAV through SAPI. The local
-Paradee backend listens only on loopback. Normal voice-list discovery remains
-unverified: System.Speech did not enumerate the per-user token, and the
-machine-wide registration step was canceled at the Windows administrator
-prompt. A physical network-disconnected test and offline installer also remain
-open.
+the per-user voice token rendered a non-silent WAV through SAPI. After
+machine-wide registration, `System.Speech.GetInstalledVoices()` listed
+`Paradee bm_fable` and `SelectVoice` played speech. The local Paradee backend
+listens only on loopback. A physical network-disconnected test, Office and
+other application tests, and an offline installer remain open.
 
 Still to decide: exact SAPI registration scope and Windows API variants,
 32-bit application support, engine process architecture, packaging format,
