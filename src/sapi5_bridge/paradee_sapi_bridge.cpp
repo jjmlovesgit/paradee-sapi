@@ -3,7 +3,7 @@
 // Build (x64, from an "x64 Native Tools Command Prompt for VS 2022"):
 //   cl /nologo /EHsc /LD /O2 /D _WINDLL http_sapi5_engine.cpp ^
 //      /link /DEF:http_sapi5_engine.def ^
-//      winhttp.lib ole32.lib advapi32.lib oleaut32.lib
+//      onnxruntime.lib ole32.lib advapi32.lib oleaut32.lib
 //
 // Uses raw COM. ATL's atls.lib in VS 2026 does not provide DllGetClassObject
 // as an exported symbol, so we hand-write the four Dll* entry points. The
@@ -18,14 +18,23 @@
 #include <winerror.h>
 #include <sapi.h>
 #include "sapi5_shim.h"
+#ifndef PARADEE_NATIVE_ENGINE
 #include <winhttp.h>
+#endif
+#include <algorithm>
+#include <cstdint>
 #include <string>
 #include <vector>
 #include <cstdio>
 #include <cstdlib>
 #include <cmath>
+#ifdef PARADEE_NATIVE_ENGINE
+#include "paradee_engine.h"
+#endif
 
+#ifndef PARADEE_NATIVE_ENGINE
 #pragma comment(lib, "winhttp.lib")
+#endif
 #pragma comment(lib, "ole32.lib")
 #pragma comment(lib, "advapi32.lib")
 #pragma comment(lib, "oleaut32.lib")
@@ -111,6 +120,7 @@ static std::wstring ReadTokenString(ISpObjectToken *tok, LPCWSTR name) {
     return L"";
 }
 
+#ifndef PARADEE_NATIVE_ENGINE
 static std::string JsonEscape(const std::wstring& in) {
     int n = WideCharToMultiByte(CP_UTF8, 0, in.c_str(), (int)in.size(),
                                 nullptr, 0, nullptr, nullptr);
@@ -271,6 +281,7 @@ static bool StripWav(const std::vector<unsigned char>& wav,
     return gotFmt && gotData;
 }
 
+#endif
 static bool ShouldAbort(ISpTTSEngineSite *site) {
     if (!site) return true;
     return (site->GetActions() & SPVES_ABORT) != 0;
@@ -331,6 +342,7 @@ private:
     std::wstring     m_provider;
     std::wstring     m_model;
     std::wstring     m_voiceId;
+    std::wstring     m_assetsDir;
     float            m_speed;
     DWORD            m_timeoutMs;
 };
@@ -368,6 +380,10 @@ STDMETHODIMP CHttpSapi5Engine::SetObjectToken(ISpObjectToken *pToken) {
     if (m_pToken) m_pToken->Release();
     m_pToken = pToken; m_pToken->AddRef();
 
+#ifdef PARADEE_NATIVE_ENGINE
+    m_assetsDir = ReadTokenString(m_pToken, L"AssetsDir");
+    if (m_assetsDir.empty()) return E_INVALIDARG;
+#else
     m_endpoint = ReadTokenString(m_pToken, L"Endpoint");
     if (m_endpoint.empty()) m_endpoint = L"http://127.0.0.1:5057";
     if (m_endpoint != L"http://127.0.0.1:5057") return E_ACCESSDENIED;
@@ -377,6 +393,7 @@ STDMETHODIMP CHttpSapi5Engine::SetObjectToken(ISpObjectToken *pToken) {
     m_provider = ReadTokenString(m_pToken, L"Provider");
     m_model    = ReadTokenString(m_pToken, L"Model");
     m_voiceId  = ReadTokenString(m_pToken, L"VoiceId");
+#endif
     std::wstring rateStr = ReadTokenString(m_pToken, L"Rate");
     if (!rateStr.empty()) {
         m_speed = ClampSpeed((float)_wtof(rateStr.c_str()));
@@ -454,6 +471,20 @@ STDMETHODIMP CHttpSapi5Engine::Speak(
         L" frag=" + std::to_wstring(fragRate) +
         L" speed=" + std::to_wstring((double)effectiveSpeed));
 
+    std::vector<unsigned char> pcm;
+#ifdef PARADEE_NATIVE_ENGINE
+    try {
+        auto audio = ParadeeSynthesize(text, m_assetsDir, effectiveSpeed);
+        pcm.resize(audio.size() * sizeof(int16_t));
+        for (size_t i = 0; i < audio.size(); ++i) {
+            auto sample = static_cast<int16_t>(std::clamp(audio[i], -1.0f, 1.0f) * 32767);
+            memcpy(pcm.data() + i * sizeof(int16_t), &sample, sizeof(sample));
+        }
+    } catch (const std::exception& error) {
+        Log(L"Speak native synthesis failed");
+        return E_FAIL;
+    }
+#else
     std::vector<unsigned char> wav;
     if (!HttpPost(m_endpoint, m_path, m_provider, m_model, m_voiceId, text,
                   effectiveSpeed, m_timeoutMs, wav)) {
@@ -462,7 +493,6 @@ STDMETHODIMP CHttpSapi5Engine::Speak(
     }
     if (ShouldAbort(pOut)) return S_OK;
 
-    std::vector<unsigned char> pcm;
     WAVEFORMATEX fmt = {};
     if (!StripWav(wav, pcm, &fmt)) {
         Log(L"Speak StripWav failed");
@@ -475,6 +505,7 @@ STDMETHODIMP CHttpSapi5Engine::Speak(
         Log(L"Speak unsupported wav fmt");
         return E_FAIL;
     }
+#endif
 
     const size_t CHUNK = 32768;
     for (size_t off = 0; off < pcm.size(); off += CHUNK) {

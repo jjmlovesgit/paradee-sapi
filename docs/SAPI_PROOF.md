@@ -1,77 +1,101 @@
-# Windows SAPI proof of concept
+# Windows native SAPI proof
 
-This prototype validates `bm_fable` through classic Windows SAPI on an x64
-Windows desktop. It is **not** the offline installer or size-optimized runtime.
-It keeps Paradee loaded in a Python process on `127.0.0.1:5057` and uses a
-native SAPI DLL to pass text to that local process and return 24 kHz PCM.
-The bridge was adapted from the MIT-licensed SAPI code in
+This prototype validates `bm_fable` through Windows SAPI on an x64 development
+desktop. The current DLL runs Paradee inference **in the calling process**. It
+uses local ONNX Runtime and eSpeak NG assets, requires no Python process at
+playback, and has no WinHTTP import. It is not yet a clean offline installer.
+
+The COM/SAPI shell was adapted from the MIT-licensed SAPI code in
 [`zotero-minimax-tts`](https://github.com/howardLHY/zotero-minimax-tts/tree/main/tools/sapi5);
-its license is retained beside the source.
+its license is retained beside the source. The native phoneme conversion
+follows Paradee's `web/misaki.js` mapping for British voices. Perceptual
+comparison with upstream Misaki output remains a quality gate.
 
-## Prerequisites
+## Build inputs
 
 - Windows x64 and Visual Studio C++ Build Tools with the Windows SDK.
-- A `.venv` containing Paradee v1.2, its dependencies, and spaCy's
-  `en_core_web_sm` English model.
-- Cached Paradee v1.2 int8 model and configuration in `.cache/huggingface`.
+- ONNX Runtime native SDK 1.31.1 in `.cache/ort-native/onnxruntime-win-x64-1.31.1`.
+- Cached Paradee v1.2 int8 model and `config.json` in `.cache/huggingface`.
+- eSpeak NG DLL and data from the development `.venv` package `espeakng-loader`.
+- Python in `.venv` is used only at build time to generate the C++ vocabulary
+  table from Paradee's `config.json`.
 
-The setup scripts will be made reproducible and pinned before laptop testing.
-The Python environment and model cache remain outside Git.
+The build script copies model and runtime assets into ignored `build/`
+directories. The model and binary dependencies are not committed to Git.
+Pinning downloads, reviewing redistribution licenses, and eliminating Python
+from the build setup remain packaging tasks before a laptop install.
 
-## Build and run on the development desktop
+## Build and test on the desktop
 
 ```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\build-native.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\build-bridge.ps1
-powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\start-local-server.ps1
 ```
 
-Leave the server running in its own terminal. In another terminal, register
-the voice. Machine-wide registration requires an elevated PowerShell session.
-Per-user registration can be used for direct-token experiments but is not
-enumerated by `System.Speech` on this machine.
+Run the standalone renderer to compare its audio with the upstream Python
+voice:
+
+```powershell
+.\build\native\paradee_native.exe "Paradee can read this text privately on this computer." build\native\bm_fable_native.wav build\native\assets
+```
+
+Machine-wide registration requires an elevated PowerShell session. The script
+registers both classic SAPI and OneCore tokens; it does not change the Windows
+default voice.
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\register-voice.ps1 -Scope LocalMachine
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-sapi.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\measure-sapi.ps1
 ```
 
-Without elevation, register in the current-user hive and render directly
-through SAPI's token API:
+Without elevation, a per-user token can be used for direct SAPI testing, but
+`System.Speech` did not enumerate that token on this machine:
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\register-voice.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\register-voice.ps1 -Scope CurrentUser
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-sapi-direct.ps1
 ```
 
-The direct test succeeded on the development desktop and produced a non-silent
-WAV. With machine-wide registration, `System.Speech.GetInstalledVoices()` also
-listed `Paradee bm_fable`, and `SelectVoice('Paradee bm_fable')` played speech.
-The user confirmed hearing the voice on this desktop. This establishes classic
-SAPI discovery and audible synthesis on this machine; Office, Discord,
-Narrator, and a clean laptop still need separate checks.
-
-Development baseline: Windows 11 Home x64, build 26300, AMD Ryzen 9 9950X,
-approximately 64 GiB RAM. Visual Studio 2022 C++ tools built the bridge DLL
-at 231,424 bytes. The existing Python environment is approximately 348 MiB.
-After synthesis, the warm Python backend measured approximately 421 MiB
-working set and 1.26 GiB private committed memory on this desktop. These are
-proof-runtime measurements, not targets for the final package.
-
-Remove exactly the keys created by this proof with:
+Remove the exact tokens and COM registration created by this prototype with:
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\register-voice.ps1 -Scope LocalMachine -Uninstall
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\register-voice.ps1 -Scope CurrentUser -Uninstall
 ```
 
-## Boundaries of the proof
+## Measured result
 
-- The bridge accepts only the fixed loopback endpoint and path. It disables
-  proxy use. The server binds only to loopback and does not log text or audio.
-- A local HTTP server is a temporary implementation choice. All speech bytes
-  stay on the device, but the final product may use an in-process engine.
-- Synthesis is buffered before SAPI receives audio. Interruption during the
-  HTTP request and precise word boundaries are not yet implemented.
-- The bridge is x64 only. Some 32-bit apps will require an additional build.
-- This prototype registers classic SAPI. OneCore and Narrator/Chromium
-  compatibility need separate validation.
+Development desktop: Windows 11 Home x64, build 26300, AMD Ryzen 9 9950X,
+approximately 64 GiB RAM. `Paradee bm_fable` appeared in
+`System.Speech.GetInstalledVoices()`, `SelectVoice` completed audible playback,
+and SAPI wrote a non-silent WAV with no backend server running. The OneCore
+token also enumerated in the OneCore SAPI category. The native DLL's imports
+include `onnxruntime.dll` and no `WINHTTP.dll`.
+
+The native DLL, ONNX Runtime DLL, model, and full eSpeak data tree total about
+42.8 MiB unpacked. In a short standalone rendering test, the native CLI
+reached about 139 MiB peak working set and 179 MiB peak private memory. In a
+SAPI PowerShell host, memory rose from about 80 MiB before voice use to about
+149 MiB after speech. A sampled peak during playback was about 176 MiB for
+the whole host. These are desktop prototype measurements, not laptop results.
+
+The earlier Python/loopback proof used about 421 MiB working set and 1.26 GiB
+private committed memory in its warm backend. Its source remains for
+comparison, but the current bridge build excludes the HTTP path.
+
+## Remaining gates
+
+- Listen to matched native and upstream `bm_fable` samples and check
+  pronunciation and naturalness. eSpeak plus phoneme conversion may differ
+  from the upstream Python Misaki path.
+- Test cold and warm latency, stop/pause behavior, sentence boundaries, and
+  longer text in real applications. The current tokenizer caps a synthesis
+  call at 510 phoneme tokens, so long inputs need chunking before acceptance.
+- Confirm the OneCore token appears and plays in each target Read Aloud picker;
+  category enumeration alone does not prove app compatibility.
+- Make a self-contained offline installer, include license notices and any
+  required Visual C++ runtime, and test clean install/uninstall on the laptop.
+- Disconnect the laptop from the network and verify synthesis plus absence of
+  speech-path network calls and unintended text/audio files.
+- Add an x86 engine only if a required 32-bit Windows application needs it.

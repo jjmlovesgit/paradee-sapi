@@ -34,7 +34,8 @@ application workflow needs its own privacy and offline validation.
 2. **Engine:** synthesize `bm_fable` locally with the correct British
    phonemization and compare it by ear with the upstream sample.
 3. **SAPI:** after installation, enumerate and select the registered voice in
-   a simple SAPI test application; read text audibly; test rate and stop.
+   a simple SAPI test application; read text audibly; test rate, stop, and
+   multi-paragraph input without truncation.
 4. **Offline and privacy:** disconnect the laptop and repeat synthesis. Inspect
    the speech process for network requests and unintended text/audio files.
 5. **Resources:** record installer/download size, installed size, idle and
@@ -52,8 +53,8 @@ application workflow needs its own privacy and offline validation.
 
 1. Validate the Windows toolchain and dependency packaging on the development
    desktop; use the laptop for clean installation and acceptance testing.
-2. Decide whether the SAPI engine hosts inference in-process or uses a local
-   worker. Compare startup cost, cancellation behavior, and total footprint.
+2. Host inference in the SAPI process for the prototype; measure startup,
+   cancellation behavior, and total footprint before fixing the final design.
 3. Implement SAPI voice registration and minimal synthesis for `bm_fable`.
 4. Package an offline installer and uninstaller; verify clean install and
    removal on the laptop.
@@ -69,27 +70,25 @@ project's development folder with Hugging Face offline mode enabled. Its
 approximately 348 MiB virtual environment shows why the full distribution
 footprint must be measured and optimized.
 
-On the development desktop, a native x64 SAPI bridge built successfully and
-the per-user voice token rendered a non-silent WAV through SAPI. After
-machine-wide registration, `System.Speech.GetInstalledVoices()` listed
-`Paradee bm_fable` and `SelectVoice` played speech. The local Paradee backend
-listens only on loopback. The warm Python process measured about 421 MiB
-working set and 1.26 GiB private committed memory, far above the desired
-lightweight product footprint. A physical network-disconnected test, Office
-and other application tests, and an offline installer remain open.
+On the development desktop, the native x64 SAPI engine rendered a non-silent
+WAV and `System.Speech.GetInstalledVoices()` listed `Paradee bm_fable` after
+machine-wide registration. `SelectVoice` completed playback without the
+earlier Python server. A OneCore token also enumerates, but no target Read
+Aloud picker has been tested. The native DLL has no WinHTTP import. The DLL,
+ONNX Runtime, int8 model, and eSpeak assets total about 42.8 MiB unpacked.
+The SAPI PowerShell host rose from about 80 MiB working set before voice use
+to about 149 MiB after speech, with a sampled peak of about 176 MiB. These
+figures include the host. Compare native and upstream voice quality by ear,
+test long passages and cancellation, and repeat measurements on the laptop.
+The earlier Python backend used about 421 MiB working set and 1.26 GiB
+private committed memory. A physical network-disconnected test, Office and
+other application tests, and an offline installer remain open.
 
-An isolated Python process loading only the Paradee int8 ONNX session measured
-about 79 MiB working set; after a short inference it measured about 106 MiB.
-Importing NumPy alone accounted for roughly 755 MiB of private committed
-memory in this environment. These measurements suggest a compact native
-runtime could meet the provisional resident-memory target, but the native
-runtime has not yet been built or measured. Its phonemizer must preserve voice
-quality without the large Python stack.
-
-Still to decide: exact SAPI registration scope and Windows API variants,
-32-bit application support, engine process architecture, packaging format,
-final performance thresholds, and the product's public name. Resolve these
-through native profiling and the laptop baseline before broadening scope.
+Still to decide: 32-bit application support, packaging format, final
+performance thresholds, and the product's public name. The prototype uses
+machine-wide classic SAPI plus OneCore tokens and an in-process x64 engine.
+Validate these choices against the laptop and target apps before broadening
+scope.
 
 ## Sources
 
