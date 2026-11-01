@@ -69,8 +69,10 @@ On the development desktop, a native x64 SAPI bridge built successfully and
 the per-user voice token rendered a non-silent WAV through SAPI. After
 machine-wide registration, `System.Speech.GetInstalledVoices()` listed
 `Paradee bm_fable` and `SelectVoice` played speech. The local Paradee backend
-listens only on loopback. A physical network-disconnected test, Office and
-other application tests, and an offline installer remain open.
+listens only on loopback. The warm Python process measured about 421 MiB
+working set and 1.26 GiB private committed memory, far above the desired
+lightweight product footprint. A physical network-disconnected test, Office
+and other application tests, and an offline installer remain open.
 
 Still to decide: exact SAPI registration scope and Windows API variants,
 32-bit application support, engine process architecture, packaging format,

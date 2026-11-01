@@ -52,6 +52,9 @@ Discord, Narrator, and a clean laptop still need separate checks.
 Development baseline: Windows 11 Home x64, build 26300, AMD Ryzen 9 9950X,
 approximately 64 GiB RAM. Visual Studio 2022 C++ tools built the bridge DLL
 at 231,424 bytes. The existing Python environment is approximately 348 MiB.
+After synthesis, the warm Python backend measured approximately 421 MiB
+working set and 1.26 GiB private committed memory on this desktop. These are
+proof-runtime measurements, not targets for the final package.
 
 Remove exactly the keys created by this proof with:
 
