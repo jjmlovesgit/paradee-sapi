@@ -114,12 +114,23 @@ comparison, but the current bridge build excludes the HTTP path.
 
 Kokoro-SAPI's README describes Chrome reading mode as a supported use case.
 Its installer registers HKLM SAPI and OneCore tokens and sets the user's
-OneCore `DefaultTokenId`. Our prototype had left that default at David. An
-isolated test setting it to Paradee moved Paradee to the first position in
-SAPI OneCore token enumeration, while WinRT `AllVoices` still returned only
-Microsoft voices. The previous default was restored after that test. Use
-`scripts/set-onecore-default.ps1` for a reversible Chrome reading-mode test;
-actual Chrome and Edge app playback remains unverified.
+OneCore `DefaultTokenId`. On this desktop, Kokoro-SAPI v0.1.0 was installed
+with its quantized model and machine-wide registration. Its setup smoke test
+spoke Kokoro Heart, and SAPI COM enumerated Kokoro Heart, Bella, Michael, and
+Emma from the OneCore category alongside Paradee. After Chrome was fully
+restarted and "System text-to-speech voice" was selected in reading mode, the
+user heard Microsoft David. Kokoro's engine log showed no new speech call from
+Chrome. The pre-test defaults were restored: classic SAPI to Paradee and
+OneCore to David; Kokoro remains installed for further comparison. This
+control shows the Chrome failure is not yet attributable to a Paradee-only
+registration or engine defect. We still need to identify which voice source
+this Chrome reading-mode path actually selects on this machine.
+
+An earlier isolated test setting the OneCore default to Paradee moved Paradee
+to the first position in SAPI OneCore token enumeration, while WinRT
+`AllVoices` still returned only Microsoft voices. That previous default was
+restored after the test. `scripts/set-onecore-default.ps1` remains available
+for a reversible OneCore test.
 
 ## Remaining gates
 
