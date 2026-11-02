@@ -23,25 +23,25 @@ uninstall. See the
 [installation guide](docs/INSTALL.md), [working spec](docs/SPEC.md), and
 [proof instructions](docs/SAPI_PROOF.md).
 
-On the development desktop, a locally installed `0.1.1` test build now emits
-SAPI word and sentence boundary events. The user confirmed that Edge Read Aloud
-restored **word highlighting** with this build. The linked `0.1.0` laptop test
-installer below predates this change; it has not been replaced.
+The current single-voice test build is `0.1.1`. It emits SAPI word and sentence
+boundary events; the user confirmed that Edge Read Aloud restored **word
+highlighting** with it. The clean laptop passed the `0.1.0` build; the new
+`0.1.1` package is published for retesting.
 
-## Laptop test download
+## Current test download
 
 This is a **private prerelease for testing**, not a production release. Sign in
 to GitHub as a user with access to this repository, then download the
-[Windows x64 installer](https://github.com/jjmlovesgit/paradee-sapi/releases/download/0.1.0-laptop-test/Paradee-SAPI-0.1.0-x64-Setup.exe)
-and [SHA-256 checksum file](https://github.com/jjmlovesgit/paradee-sapi/releases/download/0.1.0-laptop-test/SHA256SUMS.txt).
-The [release page](https://github.com/jjmlovesgit/paradee-sapi/releases/tag/0.1.0-laptop-test)
+[Windows x64 installer](https://github.com/jjmlovesgit/paradee-sapi/releases/download/0.1.1-test/Paradee-SAPI-0.1.1-x64-Setup.exe)
+and [SHA-256 checksum file](https://github.com/jjmlovesgit/paradee-sapi/releases/download/0.1.1-test/SHA256SUMS-0.1.1.txt).
+The [release page](https://github.com/jjmlovesgit/paradee-sapi/releases/tag/0.1.1-test)
 also lists both files under **Assets**. A browser that is not signed in to the
 private repository may show 404.
 
 1. On the laptop, verify the downloaded installer in PowerShell with
-   `Get-FileHash .\Paradee-SAPI-0.1.0-x64-Setup.exe -Algorithm SHA256`. The
+   `Get-FileHash .\Paradee-SAPI-0.1.1-x64-Setup.exe -Algorithm SHA256`. The
    expected SHA-256 is
-   `91f5c76cdfb7e85d4edd89b7be5c70807eec4a64d9bfc0220c81821e7a5368f0`.
+   `ee1708f7f087fd52634d03ca53548afc84dea8e061f568eb283d102f2e937ead`.
 2. Disconnect the laptop from the network, run the installer, and approve the
    Windows administrator prompt. Installation must finish without downloading
    anything.
@@ -50,8 +50,9 @@ private repository may show 404.
 4. Reconnect, restart Edge, open a page, start **Read Aloud**, and select
    **Paradee bm_fable** in Voice options. Check commas, questions, and clock
    times such as `2:00 PM` and `2:15 PM`.
-5. Close Edge and uninstall from **Settings → Apps → Installed apps**. Confirm
-   the voice disappears; run the same installer again if you want to keep it.
+5. Confirm Edge word highlighting follows Paradee speech. Close Edge and
+   uninstall from **Settings → Apps → Installed apps**. Confirm the voice
+   disappears; run the same installer again if you want to keep it.
 
 Record any missing voice, failed playback, reboot requirement, or installer
 error. The full [installation guide](docs/INSTALL.md) has troubleshooting and
@@ -68,7 +69,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\build-installer.ps
 ```
 
 The script verifies the locked runtime hashes, stages the playback assets and
-license notices, and creates `dist\Paradee-SAPI-0.1.0-x64-Setup.exe`. It uses a
+license notices, and creates `dist\Paradee-SAPI-0.1.0-x64-Setup.exe` by default. It uses a
 checksum-verified portable NSIS compiler if one is not already cached. The
 installer itself is self-contained and does not download anything. It is an
 `.exe` setup package; an `.msi` is not built yet. To build the desktop

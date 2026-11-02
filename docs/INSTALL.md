@@ -10,7 +10,7 @@ for all users.
 ## Install
 
 1. Close Edge and other apps currently speaking with Paradee.
-2. Run `Paradee-SAPI-0.1.0-x64-Setup.exe` and approve the Windows administrator
+2. Run `Paradee-SAPI-0.1.1-x64-Setup.exe` and approve the Windows administrator
    prompt. The installer places files in `C:\Program Files\Paradee-SAPI` and
    registers the `Paradee bm_fable` voice. It does not change your default
    Windows voice.
@@ -50,10 +50,10 @@ its own data or telemetry; this installer does not control the host app.
 
 The development desktop test confirmed Windows SAPI playback and selection in
 Edge Read Aloud. Chrome Reading mode and Discord did not select this voice in
-the recorded tests. The linked 0.1.0 laptop installer lacks boundary events;
-its Edge word highlighting was absent. A later 0.1.1 desktop test restored
-Edge word highlighting with Paradee, but is not the linked laptop release.
-Other Windows apps need individual compatibility tests.
+the recorded tests. The clean laptop passed the 0.1.0 installer. The 0.1.1
+desktop test restored Edge word highlighting with Paradee; that newer build is
+published for a clean laptop retest. Other Windows apps need individual
+compatibility tests.
 
 ## Troubleshooting
 
