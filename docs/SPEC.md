@@ -77,6 +77,12 @@ functional laptop checks for this test package. Rate/cancellation, resource
 measurements, network/file inspection, upgrade, and other app compatibility
 remain separate acceptance gates.
 
+The desktop 0.1.1 test installation is 43.74 MiB on disk. Two PowerShell SAPI
+host runs found roughly 61–63 MiB additional working set after speech and a
+237.2 MiB total sampled warm-speech peak, about 158.5 MiB over the host
+baseline. See `docs/SAPI_PROOF.md` for method and limits. Laptop and Edge
+resource measurements remain open.
+
 ## Implementation sequence
 
 1. Validate the Windows toolchain and dependency packaging on the development

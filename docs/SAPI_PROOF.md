@@ -245,3 +245,19 @@ On November 2, 2026, the user confirmed that installation while offline,
 speech while offline, Edge Read Aloud playback, and uninstall all passed on a
 clean laptop. This was a user-reported functional test; no laptop memory,
 latency, network-call, or unintended-file measurements were recorded.
+
+## Desktop 0.1.1 footprint sample
+
+The installed `C:\Program Files\Paradee-SAPI` directory contains 384 files
+totaling 45,862,643 bytes (43.74 MiB). The 0.1.1 setup executable is
+18,960,057 bytes (18.08 MiB). On November 2, 2026,
+`scripts/measure-sapi.ps1` measured a fresh Windows PowerShell SAPI host twice,
+speaking the same two-sentence passage cold and warm in each run. Its working
+set was 78.6–78.7 MiB before voice selection, 139.5–139.7 MiB after cold
+speech, and 141.6–141.8 MiB after warm speech: roughly 61–63 MiB additional
+resident memory after speaking. The warm-speech peak sampled every 20 ms was
+237.2 MiB total, roughly 158.5 MiB over the host baseline. The corresponding
+private-byte peak was 209.4–209.5 MiB total. These figures include PowerShell,
+`System.Speech`, SAPI, synthesis, and audio buffering in one process; they do
+not isolate the Paradee model or measure Edge's process footprint. Peaks faster
+than the sampling interval may be missed.
