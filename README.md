@@ -5,6 +5,16 @@ applications through SAPI 5 and OneCore voice registration. Speech synthesis
 runs on the CPU, on the device, without a browser extension, background server,
 or cloud TTS request.
 
+## Download a language pack
+
+| Language | Voices | Offline installer |
+| --- | ---: | --- |
+| English | 4 | [Download English 0.2.0](https://github.com/jjmlovesgit/paradee-sapi/releases/download/v0.2.0/Paradee-SAPI-0.2.0-x64-Setup.exe) |
+| Italian | 2 | [Download Italian 0.2.0](https://github.com/jjmlovesgit/paradee-sapi/releases/download/v0.2.0-italian-preview.1/Paradee-SAPI-Italian-0.2.0-x64-Setup.exe) |
+
+Both installers are self-contained Windows x64 packages. The Italian pack can
+be installed alongside the English pack or by itself.
+
 ## English voice pack
 
 The four English voices use the Paradee v1.2 model, with one shared model and runtime:
