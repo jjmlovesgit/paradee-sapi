@@ -40,11 +40,20 @@
 #pragma comment(lib, "advapi32.lib")
 #pragma comment(lib, "oleaut32.lib")
 
+// Keep the Italian add-on COM class independent from the English package.
+#ifdef PARADEE_ITALIAN_PACK
+// {B17E11A1-9A42-40A6-8DF4-5D0F7DAA3A51}
+static const GUID CLSID_HttpSapi5Engine = {
+    0xb17e11a1, 0x9a42, 0x40a6,
+    { 0x8d, 0xf4, 0x5d, 0x0f, 0x7d, 0xaa, 0x3a, 0x51 }
+};
+#else
 // {14A9D4B6-B47D-46FB-B319-6067CAFB2AD9}
 static const GUID CLSID_HttpSapi5Engine = {
     0x14a9d4b6, 0xb47d, 0x46fb,
     { 0xb3, 0x19, 0x60, 0x67, 0xca, 0xfb, 0x2a, 0xd9 }
 };
+#endif
 
 static LONG     g_DllRefCount = 0;
 static LONG     g_LockCount   = 0;
@@ -429,11 +438,16 @@ STDMETHODIMP CHttpSapi5Engine::SetObjectToken(ISpObjectToken *pToken) {
     m_assetsDir = ReadTokenString(m_pToken, L"AssetsDir");
     if (m_assetsDir.empty()) return E_INVALIDARG;
     m_voiceId = ReadTokenString(m_pToken, L"VoiceId");
+#ifdef PARADEE_ITALIAN_PACK
+    if (m_voiceId == L"if_sara") m_voiceIndex = 4;
+    else return E_INVALIDARG;
+#else
     if (m_voiceId == L"af_heart") m_voiceIndex = 0;
     else if (m_voiceId == L"bf_isabella") m_voiceIndex = 1;
     else if (m_voiceId == L"am_puck") m_voiceIndex = 2;
     else if (m_voiceId == L"bm_fable") m_voiceIndex = 3;
     else return E_INVALIDARG;
+#endif
 #else
     m_endpoint = ReadTokenString(m_pToken, L"Endpoint");
     if (m_endpoint.empty()) m_endpoint = L"http://127.0.0.1:5057";

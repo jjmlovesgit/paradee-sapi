@@ -1,0 +1,20 @@
+{
+  "repository": "MithrilMan/teacher-in-the-loop",
+  "revision": "115a6c0469632a84fbcc6c8ed0ad7b1e06154b92",
+  "voice": "if_sara",
+  "model": {
+    "path": "if_sara/model_int8.onnx",
+    "bytes": 9168506,
+    "sha256": "36a4a42ede46b43de3c390a1fd1b8efb6edeb2ff0080ce0da4bf2ecf6ead198d"
+  },
+  "vocab": {
+    "path": "vocab.json",
+    "bytes": 1147,
+    "sha256": "c985ed32b1007e0d52c8e86dd3f54e3ec62b74d14212bb5718348f7e9d734acf"
+  },
+  "license": {
+    "path": "LICENSE",
+    "bytes": 11358,
+    "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+  }
+}

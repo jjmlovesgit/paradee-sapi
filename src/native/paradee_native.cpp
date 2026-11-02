@@ -161,10 +161,15 @@ public:
     }
     ~Espeak() { if (dll_) FreeLibrary(dll_); }
 
-    std::wstring Phonemize(const std::wstring& text, bool british) const {
-        if (set_voice_(british ? "English (Great Britain)" : "English (America)") != 0)
-            throw std::runtime_error("Cannot select eSpeak English voice");
-        const std::wstring normalized = NormalizeTimes(text);
+    std::wstring Phonemize(const std::wstring& text, int voice_index) const {
+        const bool italian = voice_index == 4;
+        const bool british = voice_index == 1 || voice_index == 3;
+        const char* voice_name = italian ? "Italian" :
+            (british ? "English (Great Britain)" : "English (America)");
+        if (set_voice_(voice_name) != 0) throw std::runtime_error("Cannot select eSpeak voice");
+        // Italian eSpeak already verbalizes numbers in Italian. English time
+        // expansion must not leak into this language's pronunciation path.
+        const std::wstring normalized = italian ? text : NormalizeTimes(text);
         std::wstring result;
         size_t start = 0;
         for (size_t i = 0; i <= normalized.size(); ++i) {
@@ -195,6 +200,10 @@ public:
                 result += normalized[i];
                 start = i + 1;
             }
+        }
+        if (italian) {
+            ReplaceAll(result, L"̪", L""); // Kokoro's Italian vocabulary uses t/d, not dental-marked IPA.
+            return result;
         }
         return ToMisaki(result, british);
     }
@@ -256,45 +265,75 @@ void WriteWav(const std::wstring& path, const float* samples, size_t count) {
 class NativeEngine {
 public:
     explicit NativeEngine(const std::wstring& assets)
-        : espeak_(assets), env_(ORT_LOGGING_LEVEL_WARNING, "paradee-native") {
-        Ort::SessionOptions options;
-        options.SetIntraOpNumThreads(1);
-        options.SetInterOpNumThreads(1);
-        options.DisableCpuMemArena();
-        session_ = std::make_unique<Ort::Session>(env_, (assets + L"\\paradee_int8.onnx").c_str(), options);
-    }
+        : assets_(assets), espeak_(assets), env_(ORT_LOGGING_LEVEL_WARNING, "paradee-native") {}
 
     std::vector<float> Synthesize(const std::wstring& text, float speed, int voice_index) {
-        if (voice_index < 0 || voice_index > 3) throw std::invalid_argument("Invalid Paradee voice index");
-        const bool british = voice_index == 1 || voice_index == 3;
+        if (voice_index < 0 || voice_index > 4) throw std::invalid_argument("Invalid Paradee voice index");
+        const bool italian = voice_index == 4;
+        if (italian && !is_italian_pack_) throw std::invalid_argument("Italian voice is not available in this package");
+        Ort::Session* session = GetSession(italian);
         std::vector<float> audio;
         for (const auto& sentence : ParadeeSplitSentences(text)) {
-            for (const auto& chunk : PhonemeChunks(espeak_.Phonemize(sentence, british))) {
+            for (const auto& chunk : PhonemeChunks(espeak_.Phonemize(sentence, voice_index))) {
                 auto ids = Tokens(chunk);
                 Ort::MemoryInfo cpu = Ort::MemoryInfo::CreateCpu(OrtArenaAllocator, OrtMemTypeDefault);
                 std::array<int64_t, 2> ids_shape{1, static_cast<int64_t>(ids.size())};
                 std::array<int64_t, 1> scalar_shape{1};
-                int64_t voice = voice_index;
-                std::array<Ort::Value, 3> inputs = {
+                if (italian) {
+                    std::array<Ort::Value, 2> inputs = {
+                        Ort::Value::CreateTensor<int64_t>(cpu, ids.data(), ids.size(), ids_shape.data(), ids_shape.size()),
+                        Ort::Value::CreateTensor<float>(cpu, &speed, 1, scalar_shape.data(), scalar_shape.size()),
+                    };
+                    const char* input_names[] = {"input_ids", "speed"};
+                    const char* output_names[] = {"waveform"};
+                    auto outputs = session->Run(Ort::RunOptions{nullptr}, input_names, inputs.data(), inputs.size(), output_names, 1);
+                    auto info = outputs[0].GetTensorTypeAndShapeInfo();
+                    const float* data = outputs[0].GetTensorData<float>();
+                    audio.insert(audio.end(), data, data + info.GetElementCount());
+                } else {
+                    int64_t voice = voice_index;
+                    std::array<Ort::Value, 3> inputs = {
                     Ort::Value::CreateTensor<int64_t>(cpu, ids.data(), ids.size(), ids_shape.data(), ids_shape.size()),
                     Ort::Value::CreateTensor<float>(cpu, &speed, 1, scalar_shape.data(), scalar_shape.size()),
                     Ort::Value::CreateTensor<int64_t>(cpu, &voice, 1, scalar_shape.data(), scalar_shape.size()),
-                };
-                const char* input_names[] = {"input_ids", "speed", "voice"};
-                const char* output_names[] = {"waveform"};
-                auto outputs = session_->Run(Ort::RunOptions{nullptr}, input_names, inputs.data(), inputs.size(), output_names, 1);
-                auto info = outputs[0].GetTensorTypeAndShapeInfo();
-                const float* data = outputs[0].GetTensorData<float>();
-                audio.insert(audio.end(), data, data + info.GetElementCount());
+                    };
+                    const char* input_names[] = {"input_ids", "speed", "voice"};
+                    const char* output_names[] = {"waveform"};
+                    auto outputs = session->Run(Ort::RunOptions{nullptr}, input_names, inputs.data(), inputs.size(), output_names, 1);
+                    auto info = outputs[0].GetTensorTypeAndShapeInfo();
+                    const float* data = outputs[0].GetTensorData<float>();
+                    audio.insert(audio.end(), data, data + info.GetElementCount());
+                }
             }
         }
         return audio;
     }
 
 private:
+    Ort::Session* GetSession(bool italian) {
+        auto& session = italian ? italian_session_ : english_session_;
+        if (!session) {
+            const std::wstring model = assets_ + (italian ? L"\\if_sara-model_int8.onnx" : L"\\paradee_int8.onnx");
+            Ort::SessionOptions options;
+            options.SetIntraOpNumThreads(1);
+            options.SetInterOpNumThreads(1);
+            options.DisableCpuMemArena();
+            session = std::make_unique<Ort::Session>(env_, model.c_str(), options);
+        }
+        return session.get();
+    }
+
+    static constexpr bool is_italian_pack_ =
+#ifdef PARADEE_ITALIAN_PACK
+        true;
+#else
+        false;
+#endif
+    std::wstring assets_;
     Espeak espeak_;
     Ort::Env env_;
-    std::unique_ptr<Ort::Session> session_;
+    std::unique_ptr<Ort::Session> english_session_;
+    std::unique_ptr<Ort::Session> italian_session_;
 };
 
 } // namespace
