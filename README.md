@@ -33,6 +33,10 @@ to expose all four voices already in the model through one shared runtime.
 The four-voice installer is a separate planned version; this download still
 registers only `bm_fable`.
 
+The separate [reference voice blend experiment](experiments/voice-blend/README.md)
+prepares a local Kokoro audition workflow. It does not change the Paradee
+installer or model weights.
+
 ## Current test download
 
 This is a **private prerelease for testing**, not a production release. Sign in
