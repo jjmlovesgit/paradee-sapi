@@ -21,9 +21,10 @@ it the default voice in every Windows app.
 
 ## Offline installation
 
-Run the Windows x64 setup executable and approve the administrator prompt. The
-installer registers the four voices and includes the model, ONNX Runtime,
-eSpeak NG, and required runtime files. Playback needs no network connection.
+Download and run the [Windows x64 setup executable](https://github.com/jjmlovesgit/paradee-sapi/releases/download/v0.2.0/Paradee-SAPI-0.2.0-x64-Setup.exe),
+then approve the administrator prompt. The installer registers the four voices
+and includes the model, ONNX Runtime, eSpeak NG, and required runtime files.
+Playback needs no network connection.
 See the [Windows installation guide](docs/INSTALL.md) for selection,
 uninstallation, troubleshooting, and compatibility details.
 
