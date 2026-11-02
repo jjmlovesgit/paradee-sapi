@@ -17,9 +17,9 @@ Classic SAPI and OneCore voice tokens are registered. Edge lists and plays
 `Paradee bm_fable`; punctuation and phrasing quality remain an open release gate.
 An offline x64 setup `.exe` can now be built from local cached runtime assets.
 It installed and passed SAPI and Edge Read Aloud playback on the development
-desktop, and uninstall/reinstall passed there. The user also reported a clean
-laptop test; the exact offline, Edge, and uninstall checks on that laptop are
-still being recorded. See the
+desktop, and uninstall/reinstall passed there. On a clean laptop, the user
+confirmed offline installation, offline speech, Edge Read Aloud playback, and
+uninstall. See the
 [installation guide](docs/INSTALL.md), [working spec](docs/SPEC.md), and
 [proof instructions](docs/SAPI_PROOF.md).
 
@@ -88,8 +88,9 @@ recipe pins the model revision and runtime file hashes; these assets are
 bundled into the offline setup executable.
 
 The current proof loads inference into the SAPI client process. Its runtime
-assets total about 42.8 MiB unpacked on this desktop. Voice quality comparison
-and the remaining laptop acceptance checks stay open.
+assets total about 42.8 MiB unpacked on this desktop. Voice quality comparison,
+laptop resource measurements, upgrade testing, and broader app compatibility
+remain open.
 
 ## Attribution
 

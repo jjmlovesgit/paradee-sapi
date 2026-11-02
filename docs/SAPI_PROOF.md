@@ -210,10 +210,12 @@ for a reversible OneCore test.
 - Confirm the OneCore token appears and plays in each target Read Aloud picker;
   category enumeration alone does not prove app compatibility.
 - The self-contained setup `.exe` now includes license notices and the app-local
-  Visual C++ runtime. Desktop uninstall/reinstall passed; clean installation
-  and upgrade tests on the laptop remain open.
-- Disconnect the laptop from the network and verify synthesis plus absence of
-  speech-path network calls and unintended text/audio files.
+  Visual C++ runtime. Desktop uninstall/reinstall passed. The user confirmed
+  clean laptop installation, offline speech, Edge playback, and uninstall;
+  upgrade to a newer package remains open.
+- Offline laptop speech passed. Inspect speech-path network calls and
+  unintended text/audio files separately before making a stronger privacy
+  claim.
 - Add an x86 engine only if a required 32-bit Windows application needs it.
 
 ## Offline setup proof on the development desktop
@@ -234,9 +236,9 @@ Edge Read Aloud and reported that it played and sounded good from the packaged
 installation. With Edge closed, silent uninstall removed the voice token,
 COM registration, Installed Apps entry, and package directory. Reinstalling
 the same setup restored all 382 files and passed the SAPI speech test again.
-Upgrade to a newer package and disconnected laptop operation remain to be
-verified.
+Upgrade to a newer package remains to be verified.
 
-On November 2, 2026, the user reported that the laptop test was clean. The
-scope of that report has not yet been clarified, so offline playback, Edge
-selection, and uninstall on the laptop are not recorded as separate passes.
+On November 2, 2026, the user confirmed that installation while offline,
+speech while offline, Edge Read Aloud playback, and uninstall all passed on a
+clean laptop. This was a user-reported functional test; no laptop memory,
+latency, network-call, or unintended-file measurements were recorded.

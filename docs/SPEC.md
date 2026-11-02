@@ -64,11 +64,18 @@ that do not select the SAPI voice.
    directly for a shared worker, or the increase over the host app baseline
    for an in-process engine. Revisit these limits after native profiling.
 6. **Applications:** test Office **Speak** and Excel **Speak Cells** first.
-   Edge Read Aloud now discovers and plays Paradee on the development desktop;
+   Edge Read Aloud now discovers and plays Paradee on the development desktop
+   and clean laptop;
    retain its punctuation, long-passage quality, and synchronized word
    highlighting as separate gates. Treat
    Word/Outlook **Read Aloud**, Discord, and Narrator as separate compatibility
    gates because they may use different voice-selection paths.
+
+On November 2, 2026, the user confirmed offline installation, offline speech,
+Edge Read Aloud playback, and uninstall on the clean laptop. These close the
+functional laptop checks for this test package. Rate/cancellation, resource
+measurements, network/file inspection, upgrade, and other app compatibility
+remain separate acceptance gates.
 
 ## Implementation sequence
 
