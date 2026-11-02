@@ -34,9 +34,10 @@ The four-voice installer is a separate planned version; this download still
 registers only `bm_fable`.
 
 An unreleased `0.2.0` four-voice candidate can be built locally with
-`scripts\build-installer.ps1 -Version 0.2.0 -FourVoices`. A desktop upgrade and
-installed SAPI checks passed; Edge and clean-laptop checks remain before it
-replaces the published test download.
+`scripts\build-installer.ps1 -Version 0.2.0 -FourVoices`. A desktop upgrade,
+installed SAPI checks, and Edge playback of all four voices passed. Uninstall,
+rollback, and clean-laptop checks remain before it replaces the published test
+download.
 
 ## Current test download
 

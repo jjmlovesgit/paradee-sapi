@@ -39,8 +39,9 @@ The `codex/four-voices` branch contains a built 0.2.0 candidate. Direct native
 and temporary SAPI-token tests rendered four distinct WAVs; the existing
 `bm_fable` word-boundary test still passed. A desktop upgrade from 0.1.1
 completed, and installed classic SAPI enumerated and rendered all four voices.
-Edge playback, uninstall/rollback, and clean-laptop tests remain open before
-this candidate can be released.
+The user then confirmed that Edge Read Aloud listed and played all four voices
+and that word highlighting worked. Uninstall/rollback and clean-laptop tests
+remain open before this candidate can be released.
 
 The pinned Paradee v1.2 model already includes these voice indices. Keep the
 same model and runtime; add four independently selectable SAPI tokens:

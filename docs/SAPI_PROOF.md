@@ -275,5 +275,6 @@ measured a fresh PowerShell SAPI host at 78.7 MiB working set before voice
 selection, 142 MiB after warm `bm_fable` speech, and 140.7–141.7 MiB after
 switching through the four voices. The sampled warm peak was 236 MiB total.
 This supports a shared model session in that host; Edge and laptop memory
-remain unmeasured. Edge playback, uninstall/rollback, and clean-laptop
-validation remain open.
+remain unmeasured. The user confirmed that Edge Read Aloud listed and played
+all four voices and retained word highlighting. Uninstall/rollback and
+clean-laptop validation remain open.
