@@ -66,7 +66,8 @@ built-in Read aloud button.
    for an in-process engine. Revisit these limits after native profiling.
 6. **Applications:** test Office **Speak** and Excel **Speak Cells** first.
    Edge Read Aloud now discovers and plays Paradee on the development desktop;
-   retain its punctuation and long-passage quality as separate gates. Treat
+   retain its punctuation, long-passage quality, and synchronized word
+   highlighting as separate gates. Treat
    Word/Outlook **Read Aloud**, Discord, and Narrator as separate compatibility
    gates because they may use different voice-selection paths.
 
@@ -97,7 +98,9 @@ machine-wide registration. `SelectVoice` completed playback without the
 earlier Python server. Classic Windows Speech Properties also listed and
 played Paradee. After a Windows reboot, Edge Read Aloud listed and played
 Paradee alongside Kokoro voices, although Paradee's punctuation and phrasing
-need improvement. Discord desktop TTS played Microsoft David despite Paradee
+need improvement. The user reports that both Paradee and Kokoro voices lose
+Edge's word highlighting and underline; Paradee emits no SAPI word-boundary
+events today. Discord desktop TTS played Microsoft David despite Paradee
 being the classic SAPI default; Windows' WinRT speech API enumerated only
 Microsoft voices even with a Paradee OneCore token present. WinRT's Microsoft
 signature rule does not establish which API Discord uses, so test Chromium

@@ -118,7 +118,12 @@ not isolate model loading latency.
   voice discovery and basic playback therefore pass on this desktop. The
   earlier negative observation was transient or came from a different voice
   enumeration state; its precise cause is unknown. Paradee's punctuation and
-  phrasing are still below the desired quality.
+  phrasing are still below the desired quality. The user also observed that
+  Edge Read Aloud's word highlighting and underline disappear with both
+  Paradee and Kokoro voices. Paradee currently emits no SAPI word-boundary
+  events; Kokoro-SAPI emits estimated ones, so Edge's behavior with Kokoro
+  requires its own diagnosis. Voice discovery and audible playback are proven;
+  synchronized highlighting is not.
 - Chrome reading mode offered a generic "System text-to-speech voice" but
   played Microsoft David when the OneCore default pointed at the en-GB
   Paradee token. An experimental en-US alias of the same British voice was
@@ -182,6 +187,12 @@ for a reversible OneCore test.
   of the whole request. Split into bounded sentences, preserve punctuation
   and SAPI pauses, and compare audible phrasing with upstream Paradee before
   treating the voice as reader-ready.
+- Probe SAPI word-boundary events from a Microsoft voice, Kokoro, and Paradee
+  in a controlled host. The Paradee ONNX interface returns waveform only;
+  its bridge does not call `ISpTTSEngineSite::AddEvents`. Add source-offset and
+  audio-offset events, then retest Edge highlighting. Do not assume those
+  events alone restore Edge's UI because Kokoro already estimates and emits
+  word boundaries while the user still observes no highlighting there.
 - Confirm the OneCore token appears and plays in each target Read Aloud picker;
   category enumeration alone does not prove app compatibility.
 - Make a self-contained offline installer, include license notices and any
