@@ -29,6 +29,13 @@ foreach ($name in @('paradee_sapi_bridge.dll','onnxruntime.dll','msvcp140.dll',
                     'assets\espeak-ng.dll','assets\config.json','licenses\eSpeak-NG-GPL-3.0.txt')) {
     if (-not (Test-Path -LiteralPath (Join-Path $installDir $name))) { throw "Missing installed file: $name" }
 }
+$manifest = Get-Content -LiteralPath (Join-Path $installDir 'payload-manifest.json') -Raw | ConvertFrom-Json
+foreach ($file in $manifest.files) {
+    $path = Join-Path $installDir ($file.path.Replace('/', '\'))
+    if (-not (Test-Path -LiteralPath $path)) { throw "Missing payload file: $($file.path)" }
+    $hash = (Get-FileHash -Algorithm SHA256 -LiteralPath $path).Hash.ToLowerInvariant()
+    if ($hash -ne $file.sha256) { throw "Payload hash mismatch: $($file.path)" }
+}
 
 Add-Type -AssemblyName System.Speech
 $synth = [System.Speech.Synthesis.SpeechSynthesizer]::new()
@@ -41,7 +48,7 @@ try {
             [System.Speech.AudioFormat.AudioChannel]::Mono))
     $synth.Speak($Text)
     if ($stream.Length -lt 1024) { throw "SAPI returned too little audio: $($stream.Length) bytes" }
-    Write-Host "Installed Paradee-SAPI passed: $($stream.Length) audio bytes, $installDir"
+    Write-Host "Installed Paradee-SAPI passed: $($manifest.files.Count) files, $($stream.Length) audio bytes, $installDir"
 } finally {
     $synth.Dispose()
     $stream.Dispose()
