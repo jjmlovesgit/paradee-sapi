@@ -16,8 +16,9 @@ eSpeak NG inside the calling process, with no Python server at playback.
 Classic SAPI and OneCore voice tokens are registered. Edge lists and plays
 `Paradee bm_fable`; punctuation and phrasing quality remain an open release gate.
 An offline x64 setup `.exe` can now be built from local cached runtime assets.
-It installed and passed SAPI playback on the development desktop, but still
-needs Edge, uninstall, and clean laptop tests before release. See the
+It installed and passed SAPI and Edge Read Aloud playback on the development
+desktop, and uninstall/reinstall passed there. A clean laptop test remains
+before release. See the
 [installation guide](docs/INSTALL.md), [working spec](docs/SPEC.md), and
 [proof instructions](docs/SAPI_PROOF.md).
 

@@ -38,8 +38,9 @@ tokens and package files; it does not change a Windows default voice.
 
 For an upgrade, close speech apps and run the newer setup package. If Windows
 reports files in use, exit those apps and retry; a reboot may be required to
-finish removal of a loaded DLL. Upgrade behavior on the clean laptop remains
-an acceptance test.
+finish removal of a loaded DLL. Uninstall and reinstall passed on the
+development desktop. Upgrade behavior on the clean laptop remains an
+acceptance test.
 
 ## Privacy and current compatibility
 

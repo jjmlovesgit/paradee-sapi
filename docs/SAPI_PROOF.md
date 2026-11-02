@@ -210,8 +210,8 @@ for a reversible OneCore test.
 - Confirm the OneCore token appears and plays in each target Read Aloud picker;
   category enumeration alone does not prove app compatibility.
 - The self-contained setup `.exe` now includes license notices and the app-local
-  Visual C++ runtime. Clean install/uninstall and upgrade tests on the laptop
-  remain open.
+  Visual C++ runtime. Desktop uninstall/reinstall passed; clean installation
+  and upgrade tests on the laptop remain open.
 - Disconnect the laptop from the network and verify synthesis plus absence of
   speech-path network calls and unintended text/audio files.
 - Add an x86 engine only if a required 32-bit Windows application needs it.
@@ -229,6 +229,10 @@ The visible installer completed after administrator approval. It created
 tokens against that installed path, and added an Installed Apps uninstall entry.
 All 382 installed payload files matched the staged manifest. The
 `scripts/test-installed.ps1` check selected `Paradee bm_fable` through
-`System.Speech` and rendered 220,800 audio bytes. Edge playback from this new
-location, uninstall/upgrade, and disconnected laptop operation remain to be
+`System.Speech` and rendered 220,800 audio bytes. The user then selected it in
+Edge Read Aloud and reported that it played and sounded good from the packaged
+installation. With Edge closed, silent uninstall removed the voice token,
+COM registration, Installed Apps entry, and package directory. Reinstalling
+the same setup restored all 382 files and passed the SAPI speech test again.
+Upgrade to a newer package and disconnected laptop operation remain to be
 verified.
