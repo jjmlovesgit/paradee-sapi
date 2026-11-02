@@ -197,6 +197,12 @@ for a reversible OneCore test.
   would not reproduce context-dependent pronunciation, stress, and number
   handling; compare phoneme strings and audio on representative sentences
   before choosing a native port design.
+- The first Edge punctuation build was installed and passed direct SAPI playback.
+  On a real webpage the user reported it sounded much better, but clock times
+  such as `2:00 PM`, `2:15 PM`, and `7:00 PM` were read incorrectly. A follow-up
+  candidate normalizes clock times to spoken words before phonemization while
+  retaining ordinary comma and colon handling. Its native renderer and SAPI
+  DLL compile; Edge acceptance still requires installation and user listening.
 - Listen to matched native and upstream `bm_fable` samples and check
   pronunciation and naturalness. eSpeak plus phoneme conversion may differ
   from the upstream Python Misaki path.

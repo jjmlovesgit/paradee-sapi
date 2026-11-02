@@ -73,6 +73,69 @@ std::wstring ToMisakiBritish(std::wstring value) {
     return value;
 }
 
+std::wstring NumberWords(int value) {
+    static const wchar_t* small[] = {
+        L"zero", L"one", L"two", L"three", L"four", L"five", L"six", L"seven",
+        L"eight", L"nine", L"ten", L"eleven", L"twelve", L"thirteen", L"fourteen",
+        L"fifteen", L"sixteen", L"seventeen", L"eighteen", L"nineteen"
+    };
+    static const wchar_t* tens[] = {
+        L"", L"", L"twenty", L"thirty", L"forty", L"fifty"
+    };
+    if (value < 20) return small[value];
+    std::wstring result = tens[value / 10];
+    if (value % 10) result += std::wstring(L" ") + small[value % 10];
+    return result;
+}
+
+std::wstring NormalizeTimes(const std::wstring& text) {
+    std::wstring result;
+    for (size_t i = 0; i < text.size();) {
+        if (i && std::iswalnum(text[i - 1])) { result += text[i++]; continue; }
+        size_t hour_end = i;
+        while (hour_end < text.size() && hour_end - i < 2 &&
+               text[hour_end] >= L'0' && text[hour_end] <= L'9') ++hour_end;
+        if (hour_end == i || hour_end >= text.size() || text[hour_end] != L':' ||
+            hour_end + 2 >= text.size() ||
+            text[hour_end + 1] < L'0' || text[hour_end + 1] > L'9' ||
+            text[hour_end + 2] < L'0' || text[hour_end + 2] > L'9') {
+            result += text[i++];
+            continue;
+        }
+        int hour = 0;
+        for (size_t j = i; j < hour_end; ++j) hour = hour * 10 + (text[j] - L'0');
+        int minute = (text[hour_end + 1] - L'0') * 10 + (text[hour_end + 2] - L'0');
+        if (hour > 23 || minute > 59) { result += text[i++]; continue; }
+        size_t end = hour_end + 3;
+        size_t suffix = end;
+        while (suffix < text.size() && std::iswspace(text[suffix])) ++suffix;
+        const bool meridiem = suffix + 1 < text.size() &&
+            (text[suffix] == L'A' || text[suffix] == L'a' ||
+             text[suffix] == L'P' || text[suffix] == L'p') &&
+            (text[suffix + 1] == L'M' || text[suffix + 1] == L'm') &&
+            (suffix + 2 == text.size() || !std::iswalnum(text[suffix + 2])) &&
+            hour >= 1 && hour <= 12;
+        if (end < text.size() && std::iswalnum(text[end]) && !meridiem) {
+            result += text[i++];
+            continue;
+        }
+        result += NumberWords(hour);
+        if (minute == 0) {
+            if (!meridiem) result += L" o'clock";
+        } else {
+            result += minute < 10 ? L" oh " : L" ";
+            result += NumberWords(minute);
+        }
+        if (meridiem) {
+            result += L" ";
+            result += (text[suffix] == L'A' || text[suffix] == L'a') ? L"AM" : L"PM";
+            end = suffix + 2;
+        }
+        i = end;
+    }
+    return result;
+}
+
 class Espeak {
 public:
     explicit Espeak(const std::wstring& assets) {
@@ -89,17 +152,18 @@ public:
     ~Espeak() { if (dll_) FreeLibrary(dll_); }
 
     std::wstring Phonemize(const std::wstring& text) const {
+        const std::wstring normalized = NormalizeTimes(text);
         std::wstring result;
         size_t start = 0;
-        for (size_t i = 0; i <= text.size(); ++i) {
-            const bool inside_number = i > 0 && i + 1 < text.size() &&
-                std::iswdigit(text[i - 1]) && std::iswdigit(text[i + 1]);
-            const bool punctuation = i < text.size() &&
-                (((text[i] == L',' || text[i] == L'.') && !inside_number) ||
-                 text[i] == L';' || text[i] == L':' || text[i] == L'!' ||
-                 text[i] == L'?' || text[i] == L'…');
-            if (!punctuation && i != text.size()) continue;
-            const auto clause_text = text.substr(start, i - start);
+        for (size_t i = 0; i <= normalized.size(); ++i) {
+            const bool inside_number = i > 0 && i + 1 < normalized.size() &&
+                std::iswdigit(normalized[i - 1]) && std::iswdigit(normalized[i + 1]);
+            const bool punctuation = i < normalized.size() &&
+                (((normalized[i] == L',' || normalized[i] == L'.') && !inside_number) ||
+                 normalized[i] == L';' || normalized[i] == L':' || normalized[i] == L'!' ||
+                 normalized[i] == L'?' || normalized[i] == L'…');
+            if (!punctuation && i != normalized.size()) continue;
+            const auto clause_text = normalized.substr(start, i - start);
             if (!clause_text.empty()) {
                 std::string utf8 = ToUtf8(clause_text);
                 const void* ptr = utf8.c_str();
@@ -116,7 +180,7 @@ public:
                 }
             }
             if (punctuation) {
-                result += text[i];
+                result += normalized[i];
                 start = i + 1;
             }
         }
