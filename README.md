@@ -23,6 +23,11 @@ uninstall. See the
 [installation guide](docs/INSTALL.md), [working spec](docs/SPEC.md), and
 [proof instructions](docs/SAPI_PROOF.md).
 
+On the development desktop, a locally installed `0.1.1` test build now emits
+SAPI word and sentence boundary events. The user confirmed that Edge Read Aloud
+restored **word highlighting** with this build. The linked `0.1.0` laptop test
+installer below predates this change; it has not been replaced.
+
 ## Laptop test download
 
 This is a **private prerelease for testing**, not a production release. Sign in
@@ -66,7 +71,9 @@ The script verifies the locked runtime hashes, stages the playback assets and
 license notices, and creates `dist\Paradee-SAPI-0.1.0-x64-Setup.exe`. It uses a
 checksum-verified portable NSIS compiler if one is not already cached. The
 installer itself is self-contained and does not download anything. It is an
-`.exe` setup package; an `.msi` is not built yet.
+`.exe` setup package; an `.msi` is not built yet. To build the desktop
+boundary-event test version, pass `-Version 0.1.1` to the build script, then
+run `scripts\test-boundaries.ps1` to verify SAPI word positions and timing.
 
 ## Milestone 1
 

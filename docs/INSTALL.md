@@ -50,8 +50,10 @@ its own data or telemetry; this installer does not control the host app.
 
 The development desktop test confirmed Windows SAPI playback and selection in
 Edge Read Aloud. Chrome Reading mode and Discord did not select this voice in
-the recorded tests. Edge word highlighting was absent with Paradee and Kokoro
-third-party SAPI voices. Other Windows apps need individual compatibility tests.
+the recorded tests. The linked 0.1.0 laptop installer lacks boundary events;
+its Edge word highlighting was absent. A later 0.1.1 desktop test restored
+Edge word highlighting with Paradee, but is not the linked laptop release.
+Other Windows apps need individual compatibility tests.
 
 ## Troubleshooting
 

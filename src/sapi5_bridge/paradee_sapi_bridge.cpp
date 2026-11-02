@@ -28,6 +28,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cmath>
+#include <cwctype>
 #ifdef PARADEE_NATIVE_ENGINE
 #include "paradee_engine.h"
 #endif
@@ -299,6 +300,49 @@ static float RateAdjustToSpeed(long rateAdjust) {
     return (float)std::pow(2.0, (double)rateAdjust / 10.0);
 }
 
+static ULONG SourceOffset(const SPVTEXTFRAG *fragments, size_t textOffset) {
+    for (auto *fragment = fragments; fragment; fragment = fragment->pNext) {
+        if (textOffset < fragment->ulTextLen)
+            return fragment->ulTextSrcOffset + static_cast<ULONG>(textOffset);
+        textOffset -= fragment->ulTextLen;
+    }
+    return 0;
+}
+
+static std::vector<SPEVENT> BoundaryEvents(const SPVTEXTFRAG *fragments,
+                                           const std::wstring& sentence,
+                                           size_t textStart, ULONGLONG audioStart,
+                                           size_t audioBytes, ULONGLONG interest) {
+    std::vector<SPEVENT> events;
+    auto add = [&](SPEVENTENUM id, size_t position, size_t length,
+                   ULONGLONG audioOffset) {
+        SPEVENT event = {};
+        event.eEventId = id;
+        event.elParamType = SPET_LPARAM_IS_UNDEFINED;
+        event.ullAudioStreamOffset = audioOffset;
+        event.wParam = static_cast<WPARAM>(length);
+        event.lParam = static_cast<LPARAM>(SourceOffset(fragments, textStart + position));
+        events.push_back(event);
+    };
+    if (interest & SPFEI(SPEI_SENTENCE_BOUNDARY))
+        add(SPEI_SENTENCE_BOUNDARY, 0, sentence.size(), audioStart);
+    if (interest & SPFEI(SPEI_WORD_BOUNDARY)) {
+        // Paradee provides waveform only. These sample-aligned positions are
+        // estimates within the sentence; the text offsets remain exact.
+        for (size_t i = 0; i < sentence.size();) {
+            if (!std::iswalnum(sentence[i])) { ++i; continue; }
+            const size_t start = i++;
+            while (i < sentence.size() &&
+                   (std::iswalnum(sentence[i]) ||
+                    ((sentence[i] == L'\'' || sentence[i] == L'’') &&
+                     i + 1 < sentence.size() && std::iswalnum(sentence[i + 1])))) ++i;
+            const ULONGLONG within = (audioBytes * start / sentence.size()) & ~1ULL;
+            add(SPEI_WORD_BOUNDARY, start, i - start, audioStart + within);
+        }
+    }
+    return events;
+}
+
 // ---------------------------------------------------------------------------
 // SAPI5 TTS engine - single vtable matching the SAPI 5.4 layout.
 // Derives from ISpTTSEngine first, then ISpObjectWithToken. SAPI5 queries
@@ -486,8 +530,15 @@ STDMETHODIMP CHttpSapi5Engine::Speak(
         return S_OK;
     };
 #ifdef PARADEE_NATIVE_ENGINE
+    ULONGLONG interest = 0;
+    if (FAILED(pOut->GetEventInterest(&interest))) interest = 0;
+    ULONGLONG audioOffset = 0;
+    size_t textCursor = 0;
     for (const auto& sentence : ParadeeSplitSentences(text)) {
         if (ShouldAbort(pOut)) return S_OK;
+        const size_t textStart = text.find(sentence, textCursor);
+        if (textStart == std::wstring::npos) return E_FAIL;
+        textCursor = textStart + sentence.size();
         std::vector<unsigned char> pcm;
         try {
             auto audio = ParadeeSynthesize(sentence, m_assetsDir, effectiveSpeed);
@@ -500,8 +551,27 @@ STDMETHODIMP CHttpSapi5Engine::Speak(
             Log(L"Speak native synthesis failed");
             return E_FAIL;
         }
-        HRESULT hr = writePcm(pcm);
-        if (FAILED(hr)) return hr;
+        const auto events = BoundaryEvents(pText, sentence, textStart,
+                                           audioOffset, pcm.size(), interest);
+        size_t writtenBytes = 0;
+        for (const auto& event : events) {
+            const size_t eventByte = static_cast<size_t>(event.ullAudioStreamOffset - audioOffset);
+            if (eventByte > writtenBytes) {
+                std::vector<unsigned char> segment(pcm.begin() + writtenBytes,
+                                                   pcm.begin() + eventByte);
+                HRESULT hr = writePcm(segment);
+                if (FAILED(hr) || ShouldAbort(pOut)) return hr;
+                writtenBytes = eventByte;
+            }
+            HRESULT hr = pOut->AddEvents(&event, 1);
+            if (FAILED(hr)) return hr;
+        }
+        if (writtenBytes < pcm.size()) {
+            std::vector<unsigned char> segment(pcm.begin() + writtenBytes, pcm.end());
+            HRESULT hr = writePcm(segment);
+            if (FAILED(hr)) return hr;
+        }
+        audioOffset += pcm.size();
     }
 #else
     std::vector<unsigned char> pcm;

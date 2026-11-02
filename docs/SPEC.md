@@ -65,9 +65,9 @@ that do not select the SAPI voice.
    for an in-process engine. Revisit these limits after native profiling.
 6. **Applications:** test Office **Speak** and Excel **Speak Cells** first.
    Edge Read Aloud now discovers and plays Paradee on the development desktop
-   and clean laptop;
-   retain its punctuation, long-passage quality, and synchronized word
-   highlighting as separate gates. Treat
+   and clean laptop. A 0.1.1 desktop test restored Edge word highlighting;
+   retain punctuation, long-passage quality, and laptop validation of the new
+   boundary events as separate gates. Treat
    Word/Outlook **Read Aloud**, Discord, and Narrator as separate compatibility
    gates because they may use different voice-selection paths.
 
@@ -108,8 +108,13 @@ sentence phrasing and normalized clock times such as `2:00 PM`; the user
 reported a good result in Edge. Matched-sentence listening still found the
 upstream Misaki phonemizer more fluent, so pronunciation parity remains open.
 The user reports that both Paradee and Kokoro voices lose
-Edge's word highlighting and underline; Paradee emits no SAPI word-boundary
-events today. Discord desktop TTS played Microsoft David despite Paradee
+Edge's word highlighting and underline. A 0.1.1 desktop test build now emits
+SAPI sentence boundaries at the exact start of each synthesized sentence and
+word boundaries with exact input positions and estimated within-sentence audio
+times. A controlled `System.Speech` test received seven distinct word events.
+After installing this build, the user confirmed that Edge Read Aloud restored
+word highlighting. Sentence underlining was not observed or verified; the
+reading app controls that UI. Discord desktop TTS played Microsoft David despite Paradee
 being the classic SAPI default; Windows' WinRT speech API enumerated only
 Microsoft voices even with a Paradee OneCore token present. WinRT's Microsoft
 signature rule does not establish which API Discord uses, so test Chromium

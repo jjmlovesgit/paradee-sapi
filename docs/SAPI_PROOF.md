@@ -119,11 +119,12 @@ not isolate model loading latency.
   earlier negative observation was transient or came from a different voice
   enumeration state; its precise cause is unknown. Paradee's punctuation and
   phrasing are still below the desired quality. The user also observed that
-  Edge Read Aloud's word highlighting and underline disappear with both
-  Paradee and Kokoro voices. Paradee currently emits no SAPI word-boundary
-  events; Kokoro-SAPI emits estimated ones, so Edge's behavior with Kokoro
-  requires its own diagnosis. Voice discovery and audible playback are proven;
-  synchronized highlighting is not.
+  Edge Read Aloud's word highlighting and underline disappeared with the
+  original Paradee and Kokoro voices. The 0.1.0 Paradee build emitted no SAPI
+  boundary events. A later 0.1.1 desktop test build emits sentence and word
+  boundaries, and the user confirmed that Edge restored word highlighting.
+  Sentence underlining was not verified. Kokoro's separate behavior still
+  requires its own diagnosis.
 - Chrome reading mode offered a generic "System text-to-speech voice" but
   played Microsoft David when the OneCore default pointed at the en-GB
   Paradee token. An experimental en-US alias of the same British voice was
@@ -201,12 +202,14 @@ for a reversible OneCore test.
   limit, but the SAPI bridge still ignores silence actions and some fragment
   controls. Compare matched passages with upstream Paradee before declaring
   reading quality complete.
-- Probe SAPI word-boundary events from a Microsoft voice, Kokoro, and Paradee
-  in a controlled host. The Paradee ONNX interface returns waveform only;
-  its bridge does not call `ISpTTSEngineSite::AddEvents`. Add source-offset and
-  audio-offset events, then retest Edge highlighting. Do not assume those
-  events alone restore Edge's UI because Kokoro already estimates and emits
-  word boundaries while the user still observes no highlighting there.
+- The 0.1.1 desktop test bridge calls `ISpTTSEngineSite::AddEvents` for sentence
+  and word boundaries. Sentence audio starts are exact; word audio positions
+  are estimated because the Paradee ONNX interface returns waveform only.
+  `scripts/test-boundaries.ps1` verified seven word positions against the
+  source text and distinct audio positions through `System.Speech`. Retest
+  Edge Read Aloud restored word highlighting on the development desktop after
+  installing this build. The 0.1.0 laptop installer does not contain this fix;
+  laptop retesting and sentence underline behavior remain open.
 - Confirm the OneCore token appears and plays in each target Read Aloud picker;
   category enumeration alone does not prove app compatibility.
 - The self-contained setup `.exe` now includes license notices and the app-local
