@@ -236,3 +236,7 @@ COM registration, Installed Apps entry, and package directory. Reinstalling
 the same setup restored all 382 files and passed the SAPI speech test again.
 Upgrade to a newer package and disconnected laptop operation remain to be
 verified.
+
+On November 2, 2026, the user reported that the laptop test was clean. The
+scope of that report has not yet been clarified, so offline playback, Edge
+selection, and uninstall on the laptop are not recorded as separate passes.
