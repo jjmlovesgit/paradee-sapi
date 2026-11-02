@@ -33,10 +33,16 @@ it the default voice in every Windows app.
 
 ## Italian voice pack
 
-The separate Italian installer provides `Paradee if_sara` and `Paradee im_nicola`.
-Each uses its own Italian student model; the pack shares the SAPI runtime and
-Italian eSpeak NG frontend. It can be installed alongside the English pack or
-on its own. Both voices play in Edge Read Aloud with word highlighting.
+The two Italian voices each use their own student model, with a shared runtime:
+
+| Voice | Style | Pronunciation |
+| --- | --- | --- |
+| `Paradee if_sara` | Female Italian | Italian |
+| `Paradee im_nicola` | Male Italian | Italian |
+
+The pack shares the SAPI runtime and Italian eSpeak NG frontend. It can be
+installed alongside the English pack or on its own. Both voices play in Edge
+Read Aloud with word highlighting.
 
 Download the [Italian Windows x64 installer](https://github.com/jjmlovesgit/paradee-sapi/releases/download/v0.2.0-italian-preview.1/Paradee-SAPI-Italian-0.2.0-x64-Setup.exe).
 After installing, fully stop Edge, including background `msedge.exe` processes,
