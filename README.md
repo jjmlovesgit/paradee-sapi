@@ -9,8 +9,14 @@ through standard Windows speech interfaces. The intended use includes reading
 PII, confidential intellectual property, and regulated text without sending
 that text to a speech service.
 
-**Status:** specification and upstream engine smoke test. No SAPI adapter or
-Windows installer has been built yet. See [the working spec](docs/SPEC.md).
+**Status:** the native x64 SAPI proof works on the Windows development desktop.
+`Paradee bm_fable` appears in the installed voice list and speaks through
+`System.Speech` and Microsoft Edge Read Aloud. The engine runs ONNX Runtime and
+eSpeak NG inside the calling process, with no Python server at playback.
+Classic SAPI and OneCore voice tokens are registered. Edge lists and plays
+`Paradee bm_fable`; punctuation and phrasing quality remain an open release gate.
+There is no offline installer yet. See
+[the working spec](docs/SPEC.md) and [proof instructions](docs/SAPI_PROOF.md).
 
 ## Milestone 1
 
@@ -30,6 +36,10 @@ The local virtual environment, model cache, cloned upstream source, and audio
 samples are intentionally excluded from this repository. The future build
 instructions will pin upstream commits and model revisions and provide a fully
 offline installation path.
+
+The current proof loads inference into the SAPI client process. Its runtime
+assets total about 42.8 MiB unpacked on this desktop. Packaging, quality
+comparison, and laptop acceptance testing remain open.
 
 ## Attribution
 

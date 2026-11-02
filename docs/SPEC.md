@@ -27,6 +27,22 @@ application workflow needs its own privacy and offline validation.
 - Reliability: meaningful error reporting, repeatable installation and
   uninstallation, and operation after the network is disconnected.
 
+## Cross-application reading requirement
+
+Deliver reading of selected text in browsers and desktop apps through one
+installed Windows executable, without a browser extension or native-messaging
+host. The executable should provide an explicit global hotkey, capture only
+the current selection where the source app permits copying, synthesize it
+locally with Paradee, and offer stop and rate controls. Preserve the user's
+clipboard when a copy-based fallback is needed. Test on Edge, Discord, and
+Word with short and multi-paragraph selections.
+
+SAPI registration remains useful for apps that select SAPI voices. It does
+not make Paradee appear in every application's own voice picker. Edge's
+built-in Read Aloud picker now lists and plays Paradee on the development
+desktop. The planned selected-text reader is a separate user action for apps
+that do not select the SAPI voice.
+
 ## Acceptance gates
 
 1. **Baseline:** record Windows version, architecture, CPU, RAM, and native
@@ -34,22 +50,32 @@ application workflow needs its own privacy and offline validation.
 2. **Engine:** synthesize `bm_fable` locally with the correct British
    phonemization and compare it by ear with the upstream sample.
 3. **SAPI:** after installation, enumerate and select the registered voice in
-   a simple SAPI test application; read text audibly; test rate and stop.
+   a simple SAPI test application; read text audibly; test rate, stop, and
+   multi-paragraph input without truncation. Check audible pauses and phrasing
+   at commas, sentence endings, questions, and paragraph boundaries against
+   the upstream `bm_fable` voice.
 4. **Offline and privacy:** disconnect the laptop and repeat synthesis. Inspect
    the speech process for network requests and unintended text/audio files.
 5. **Resources:** record installer/download size, installed size, idle and
    speaking memory, CPU use, cold-start and warm-start time to first speech,
-   and speed on a representative passage. Set pass/fail thresholds after the
-   baseline measurements.
+   and speed on a representative passage. Provisional native-runtime target:
+   at most 150 MiB additional resident memory after the first utterance and
+   at most 250 MiB peak for representative sentences. Measure the process
+   directly for a shared worker, or the increase over the host app baseline
+   for an in-process engine. Revisit these limits after native profiling.
 6. **Applications:** test Office **Speak** and Excel **Speak Cells** first.
-   Treat Word/Outlook **Read Aloud**, Discord, and Narrator as separate
-   compatibility gates because they may use different voice-selection paths.
+   Edge Read Aloud now discovers and plays Paradee on the development desktop;
+   retain its punctuation, long-passage quality, and synchronized word
+   highlighting as separate gates. Treat
+   Word/Outlook **Read Aloud**, Discord, and Narrator as separate compatibility
+   gates because they may use different voice-selection paths.
 
 ## Implementation sequence
 
-1. Validate the Windows toolchain and dependency packaging on the laptop.
-2. Decide whether the SAPI engine hosts inference in-process or uses a local
-   worker. Compare startup cost, cancellation behavior, and total footprint.
+1. Validate the Windows toolchain and dependency packaging on the development
+   desktop; use the laptop for clean installation and acceptance testing.
+2. Host inference in the SAPI process for the prototype; measure startup,
+   cancellation behavior, and total footprint before fixing the final design.
 3. Implement SAPI voice registration and minimal synthesis for `bm_fable`.
 4. Package an offline installer and uninstaller; verify clean install and
    removal on the laptop.
@@ -60,16 +86,42 @@ application workflow needs its own privacy and offline validation.
 ## Current evidence and open design choices
 
 Upstream Paradee v1.2 provides four voices in one approximately 8.5 MB int8
-ONNX model. The existing Python runtime has synthesized `bm_fable` locally in
-this project's development folder with Hugging Face offline mode enabled.
-Its approximately 348 MiB virtual environment shows why the full distribution
-footprint must be measured and optimized. A physical network-disconnected
-test and SAPI integration have not yet happened.
+ONNX model. The Python runtime has synthesized `bm_fable` locally in this
+project's development folder with Hugging Face offline mode enabled. Its
+approximately 348 MiB virtual environment shows why the full distribution
+footprint must be measured and optimized.
 
-Still to decide: exact SAPI registration scope and Windows API variants,
-32-bit application support, engine process architecture, packaging format,
-numeric performance thresholds, and the product's public name. Resolve these
-through the laptop baseline and a minimal SAPI proof before broadening scope.
+On the development desktop, the native x64 SAPI engine rendered a non-silent
+WAV and `System.Speech.GetInstalledVoices()` listed `Paradee bm_fable` after
+machine-wide registration. `SelectVoice` completed playback without the
+earlier Python server. Classic Windows Speech Properties also listed and
+played Paradee. After a Windows reboot, Edge Read Aloud listed and played
+Paradee alongside Kokoro voices. Subsequent native builds improved comma and
+sentence phrasing and normalized clock times such as `2:00 PM`; the user
+reported a good result in Edge. Matched-sentence listening still found the
+upstream Misaki phonemizer more fluent, so pronunciation parity remains open.
+The user reports that both Paradee and Kokoro voices lose
+Edge's word highlighting and underline; Paradee emits no SAPI word-boundary
+events today. Discord desktop TTS played Microsoft David despite Paradee
+being the classic SAPI default; Windows' WinRT speech API enumerated only
+Microsoft voices even with a Paradee OneCore token present. WinRT's Microsoft
+signature rule does not establish which API Discord uses, so test Chromium
+Web Speech voice enumeration before choosing a Discord fix. The native DLL has
+no WinHTTP import. The DLL,
+ONNX Runtime, int8 model, and eSpeak assets total about 42.8 MiB unpacked.
+The SAPI PowerShell host rose from about 80 MiB working set before voice use
+to about 149 MiB after speech, with a sampled peak of about 176 MiB. These
+figures include the host. Compare native and upstream voice quality by ear,
+test long passages and cancellation, and repeat measurements on the laptop.
+The earlier Python backend used about 421 MiB working set and 1.26 GiB
+private committed memory. A physical network-disconnected test, Office and
+other application tests, and an offline installer remain open.
+
+Still to decide: 32-bit application support, packaging format, final
+performance thresholds, and the product's public name. The prototype uses
+machine-wide classic SAPI plus OneCore tokens and an in-process x64 engine.
+Validate these choices against the laptop and target apps before broadening
+scope.
 
 ## Sources
 
