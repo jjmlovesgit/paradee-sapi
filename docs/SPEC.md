@@ -37,9 +37,10 @@ before treating it as a clean-machine baseline for the next installer.
 
 The `codex/four-voices` branch contains a built 0.2.0 candidate. Direct native
 and temporary SAPI-token tests rendered four distinct WAVs; the existing
-`bm_fable` word-boundary test still passed. Installed-token enumeration, an
-upgrade from 0.1.1, Edge playback, uninstall, and clean-laptop tests remain
-open before this candidate can be released.
+`bm_fable` word-boundary test still passed. A desktop upgrade from 0.1.1
+completed, and installed classic SAPI enumerated and rendered all four voices.
+Edge playback, uninstall/rollback, and clean-laptop tests remain open before
+this candidate can be released.
 
 The pinned Paradee v1.2 model already includes these voice indices. Keep the
 same model and runtime; add four independently selectable SAPI tokens:
@@ -157,8 +158,9 @@ resource measurements remain open.
 4. **Open baseline checks:** repeat installation, playback, highlighting, and
    uninstall for 0.1.1 on the laptop; measure laptop resources, rate, stop,
    longer passages, and speech-path network/file behavior.
-5. **Next build:** add the remaining three released voices through the shared
-   model and four SAPI registrations, using the next-milestone gates above.
+5. **Candidate built:** add the remaining three released voices through the
+   shared model and four SAPI registrations. Complete the next-milestone gates
+   above before release.
 6. **Later:** add voice discovery/previews and direct CLI/API surfaces for
    harnesses or non-SAPI devices; assess the selected-text reader separately.
 

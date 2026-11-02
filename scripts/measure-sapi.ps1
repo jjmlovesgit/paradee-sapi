@@ -1,3 +1,5 @@
+param([switch] $AllVoices)
+
 $ErrorActionPreference = 'Stop'
 
 function Get-Memory([string] $Phase) {
@@ -34,6 +36,14 @@ try {
             PrivateMiB = $peakPrivate
         })
         $results.Add((Get-Memory "after $pass speech"))
+    }
+    if ($AllVoices) {
+        $synth.SetOutputToNull()
+        foreach ($voice in @('Paradee af_heart', 'Paradee bf_isabella', 'Paradee am_puck', 'Paradee bm_fable')) {
+            $synth.SelectVoice($voice)
+            $synth.Speak($text)
+            $results.Add((Get-Memory "after $voice"))
+        }
     }
 } finally {
     $synth.Dispose()
