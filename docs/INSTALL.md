@@ -1,6 +1,8 @@
 # Install Paradee-SAPI on Windows
 
-This installer adds the offline `Paradee bm_fable` voice to 64-bit Windows SAPI.
+The published 0.1.1 installer adds the offline `Paradee bm_fable` voice to
+64-bit Windows SAPI. The local 0.2.0 candidate adds `af_heart`, `bf_isabella`,
+`am_puck`, and `bm_fable` through one shared model and runtime.
 It includes the model, ONNX Runtime, eSpeak NG, and voice registration. Playback
 also includes the app-local Visual C++ runtime files ONNX Runtime needs.
 Playback does not require Python, a browser extension, a local server, or an internet
@@ -10,12 +12,12 @@ for all users.
 ## Install
 
 1. Close Edge and other apps currently speaking with Paradee.
-2. Run `Paradee-SAPI-0.1.1-x64-Setup.exe` and approve the Windows administrator
-   prompt. The installer places files in `C:\Program Files\Paradee-SAPI` and
-   registers the `Paradee bm_fable` voice. It does not change your default
-   Windows voice.
+2. Run the setup executable for the version you are testing and approve the
+   Windows administrator prompt. The installer places files in
+   `C:\Program Files\Paradee-SAPI` and registers its Paradee voices. It does
+   not change your default Windows voice.
 3. Open Edge again. Start **Read Aloud**, open **Voice options**, and select
-   **Paradee bm_fable**. If the voice is not listed, close Edge completely and
+   a **Paradee** voice. If it is not listed, close Edge completely and
    reopen it; a Windows restart may be needed after a first machine-wide voice
    registration.
 
@@ -37,7 +39,8 @@ Installed apps → Paradee-SAPI bm_fable → Uninstall**. The installer also add
 **Paradee-SAPI → Uninstall** to the Start menu. Uninstall removes the voice
 tokens and package files. If you manually made Paradee your Windows default
 voice, select another default before uninstalling so it does not point to a
-removed voice. Installation itself does not change the default.
+removed voice. The 0.2.0 uninstaller refuses removal while Paradee is the
+current user's default. Installation itself does not change the default.
 
 For an upgrade, close speech apps and run the newer setup package. If Windows
 reports files in use, exit those apps and retry; a reboot may be required to

@@ -35,6 +35,14 @@ before treating it as a clean-machine baseline for the next installer.
 
 ## Next milestone: all four released voices
 
+The `codex/four-voices` branch contains a built 0.2.0 candidate. Direct native
+and temporary SAPI-token tests rendered four distinct WAVs; the existing
+`bm_fable` word-boundary test still passed. A desktop upgrade from 0.1.1
+completed, and installed classic SAPI enumerated and rendered all four voices.
+The user then confirmed that Edge Read Aloud listed and played all four voices
+and that word highlighting worked. Uninstall/rollback and clean-laptop tests
+remain open before this candidate can be released.
+
 The pinned Paradee v1.2 model already includes these voice indices. Keep the
 same model and runtime; add four independently selectable SAPI tokens:
 
@@ -58,8 +66,8 @@ Package all four tokens against one installed DLL, model, and asset directory.
 Keep the model loaded once per host process. Installation and uninstall must
 add and remove all four tokens without affecting unrelated voices. Do not
 silently change the Windows default during installation; if the user has set
-Paradee as the default before uninstall, restore a valid remaining voice
-instead of leaving a dangling default token. An upgrade from `0.1.1` must
+Paradee as the default before uninstall, require a valid remaining default
+before removing its token. An upgrade from `0.1.1` must
 retain working `bm_fable` and add the three new voices; a rollback to `0.1.1`
 must remove the new tokens. Version and publish the four-voice package
 separately from 0.1.1.
@@ -151,8 +159,9 @@ resource measurements remain open.
 4. **Open baseline checks:** repeat installation, playback, highlighting, and
    uninstall for 0.1.1 on the laptop; measure laptop resources, rate, stop,
    longer passages, and speech-path network/file behavior.
-5. **Next build:** add the remaining three released voices through the shared
-   model and four SAPI registrations, using the next-milestone gates above.
+5. **Candidate built:** add the remaining three released voices through the
+   shared model and four SAPI registrations. Complete the next-milestone gates
+   above before release.
 6. **Later:** add voice discovery/previews and direct CLI/API surfaces for
    harnesses or non-SAPI devices; assess the selected-text reader separately.
 

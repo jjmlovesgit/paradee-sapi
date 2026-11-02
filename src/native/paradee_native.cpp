@@ -1,4 +1,4 @@
-// Standalone native Paradee v1.2 bm_fable prototype.
+// Standalone native Paradee v1.2 four-voice engine.
 // Uses ONNX Runtime and eSpeak NG; no Python runtime is needed at playback.
 
 #define WIN32_LEAN_AND_MEAN
@@ -49,9 +49,9 @@ void ReplaceAll(std::wstring& value, const std::wstring& from, const std::wstrin
     }
 }
 
-std::wstring ToMisakiBritish(std::wstring value) {
-    // Mirrors upstream Paradee web/misaki.js for the British voice.
-    ReplaceAll(value, L"eə", L"ɛː");
+std::wstring ToMisaki(std::wstring value, bool british) {
+    // Mirrors upstream Paradee web/misaki.js for both English frontends.
+    if (british) ReplaceAll(value, L"eə", L"ɛː");
     static const std::pair<const wchar_t*, const wchar_t*> pairs[] = {
         {L"ʔˌn̩", L"ʔn"}, {L"ʔn̩", L"ʔn"}, {L"aɪ", L"I"}, {L"aʊ", L"W"},
         {L"dʒ", L"ʤ"}, {L"eɪ", L"A"}, {L"e", L"A"}, {L"tʃ", L"ʧ"},
@@ -63,10 +63,20 @@ std::wstring ToMisakiBritish(std::wstring value) {
     value = std::regex_replace(value, std::wregex(L"(\\S)̩"), L"ᵊ$1");
     ReplaceAll(value, L"̩", L"");
     value = std::regex_replace(value, std::wregex(L"əl(?=[\\s;:,.!?—…\"“”()]|$)"), L"ᵊl");
-    value = std::regex_replace(value, std::wregex(L"ɐ(?!n?(?:[\\s;:,.!?—…\"“”()]|$))"), L"ə");
-    ReplaceAll(value, L"iə", L"ɪə");
-    ReplaceAll(value, L"əʊ", L"Q");
-    value = std::regex_replace(value, std::wregex(L"(^|\\s)ðɪ(?=\\s|$)"), L"$1ði");
+    value = std::regex_replace(value,
+        std::wregex(british ? L"ɐ(?!n?(?:[\\s;:,.!?—…\"“”()]|$))"
+                            : L"ɐ(?![\\s;:,.!?—…\"“”()]|$)"), L"ə");
+    if (british) {
+        ReplaceAll(value, L"iə", L"ɪə");
+        ReplaceAll(value, L"əʊ", L"Q");
+        value = std::regex_replace(value, std::wregex(L"(^|\\s)ðɪ(?=\\s|$)"), L"$1ði");
+    } else {
+        ReplaceAll(value, L"oʊ", L"O");
+        ReplaceAll(value, L"ɜːɹ", L"ɜɹ");
+        ReplaceAll(value, L"ɜː", L"ɜɹ");
+        ReplaceAll(value, L"ɪə", L"iə");
+        ReplaceAll(value, L"ː", L"");
+    }
     ReplaceAll(value, L"o", L"ɔ");
     ReplaceAll(value, L"ɾ", L"T");
     ReplaceAll(value, L"ʔ", L"t");
@@ -151,7 +161,9 @@ public:
     }
     ~Espeak() { if (dll_) FreeLibrary(dll_); }
 
-    std::wstring Phonemize(const std::wstring& text) const {
+    std::wstring Phonemize(const std::wstring& text, bool british) const {
+        if (set_voice_(british ? "English (Great Britain)" : "English (America)") != 0)
+            throw std::runtime_error("Cannot select eSpeak English voice");
         const std::wstring normalized = NormalizeTimes(text);
         std::wstring result;
         size_t start = 0;
@@ -184,7 +196,7 @@ public:
                 start = i + 1;
             }
         }
-        return ToMisakiBritish(result);
+        return ToMisaki(result, british);
     }
 
 private:
@@ -252,15 +264,17 @@ public:
         session_ = std::make_unique<Ort::Session>(env_, (assets + L"\\paradee_int8.onnx").c_str(), options);
     }
 
-    std::vector<float> Synthesize(const std::wstring& text, float speed) {
+    std::vector<float> Synthesize(const std::wstring& text, float speed, int voice_index) {
+        if (voice_index < 0 || voice_index > 3) throw std::invalid_argument("Invalid Paradee voice index");
+        const bool british = voice_index == 1 || voice_index == 3;
         std::vector<float> audio;
         for (const auto& sentence : ParadeeSplitSentences(text)) {
-            for (const auto& chunk : PhonemeChunks(espeak_.Phonemize(sentence))) {
+            for (const auto& chunk : PhonemeChunks(espeak_.Phonemize(sentence, british))) {
                 auto ids = Tokens(chunk);
                 Ort::MemoryInfo cpu = Ort::MemoryInfo::CreateCpu(OrtArenaAllocator, OrtMemTypeDefault);
                 std::array<int64_t, 2> ids_shape{1, static_cast<int64_t>(ids.size())};
                 std::array<int64_t, 1> scalar_shape{1};
-                int64_t voice = 3;
+                int64_t voice = voice_index;
                 std::array<Ort::Value, 3> inputs = {
                     Ort::Value::CreateTensor<int64_t>(cpu, ids.data(), ids.size(), ids_shape.data(), ids_shape.size()),
                     Ort::Value::CreateTensor<float>(cpu, &speed, 1, scalar_shape.data(), scalar_shape.size()),
@@ -307,7 +321,7 @@ std::vector<std::wstring> ParadeeSplitSentences(const std::wstring& text) {
     return sentences;
 }
 
-std::vector<float> ParadeeSynthesize(const std::wstring& text, const std::wstring& assets_dir, float speed) {
+std::vector<float> ParadeeSynthesize(const std::wstring& text, const std::wstring& assets_dir, float speed, int voice_index) {
     static std::mutex mutex;
     static std::unique_ptr<NativeEngine> engine;
     static std::wstring loaded_dir;
@@ -316,17 +330,18 @@ std::vector<float> ParadeeSynthesize(const std::wstring& text, const std::wstrin
         engine = std::make_unique<NativeEngine>(assets_dir);
         loaded_dir = assets_dir;
     }
-    return engine->Synthesize(text, speed);
+    return engine->Synthesize(text, speed, voice_index);
 }
 
 #ifndef PARADEE_NATIVE_LIBRARY
 int wmain(int argc, wchar_t** argv) {
-    if (argc != 4) {
-        std::wcerr << L"Usage: paradee_native.exe TEXT OUTPUT_WAV ASSETS_DIR\n";
+    if (argc != 4 && argc != 5) {
+        std::wcerr << L"Usage: paradee_native.exe TEXT OUTPUT_WAV ASSETS_DIR [VOICE_INDEX]\n";
         return 2;
     }
     try {
-        auto audio = ParadeeSynthesize(argv[1], argv[3], 1.0f);
+        int voice_index = argc == 5 ? std::stoi(argv[4]) : 3;
+        auto audio = ParadeeSynthesize(argv[1], argv[3], 1.0f, voice_index);
         WriteWav(argv[2], audio.data(), audio.size());
         std::wcout << L"Wrote " << argv[2] << L" (" << audio.size() << L" samples)\n";
         return 0;

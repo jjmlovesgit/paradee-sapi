@@ -262,3 +262,19 @@ private-byte peak was 209.4–209.5 MiB total. These figures include PowerShell,
 `System.Speech`, SAPI, synthesis, and audio buffering in one process; they do
 not isolate the Paradee model or measure Edge's process footprint. Peaks faster
 than the sampling interval may be missed.
+
+## Desktop 0.2.0 four-voice candidate
+
+On November 2, 2026, the 0.2.0 offline installer upgraded the development
+desktop from 0.1.1 after Edge was fully closed. `scripts/test-installed.ps1
+-FourVoices` verified the installed payload manifest, four classic SAPI and
+OneCore tokens, and distinct SAPI audio from each voice. The installed folder
+contains 384 files totaling 45,865,493 bytes (43.74 MiB); the setup executable
+is 18,960,588 bytes (18.08 MiB). `scripts/measure-sapi.ps1 -AllVoices`
+measured a fresh PowerShell SAPI host at 78.7 MiB working set before voice
+selection, 142 MiB after warm `bm_fable` speech, and 140.7–141.7 MiB after
+switching through the four voices. The sampled warm peak was 236 MiB total.
+This supports a shared model session in that host; Edge and laptop memory
+remain unmeasured. The user confirmed that Edge Read Aloud listed and played
+all four voices and retained word highlighting. Uninstall/rollback and
+clean-laptop validation remain open.
