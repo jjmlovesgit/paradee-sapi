@@ -82,6 +82,7 @@ Section "Install Italian voice" SEC_MAIN
   WriteRegStr HKLM "${SAPI_KEY}\Attributes" "Rate" "1.0"
   WriteRegStr HKLM "${ONECORE_KEY}" "" "${VOICE_NAME}"
   WriteRegStr HKLM "${ONECORE_KEY}" "CLSID" "${CLSID}"
+  WriteRegStr HKLM "${ONECORE_KEY}" "0410" "${VOICE_NAME}"
   WriteRegStr HKLM "${ONECORE_KEY}" "VoiceName" "if_sara"
   WriteRegStr HKLM "${ONECORE_KEY}" "AssetsDir" "$INSTDIR\assets"
   WriteRegStr HKLM "${ONECORE_KEY}\Attributes" "Name" "${VOICE_NAME}"
