@@ -23,9 +23,10 @@ To check classic SAPI independently, open **Windows Speech Properties** and
 use the **Text to Speech** tab's **Preview Voice** button. A SAPI application
 can also select the installed name `Paradee bm_fable`.
 
-The installer is about the size of its bundled runtime; the unpacked runtime
-assets measured about 43 MiB on the development desktop. This is a local x64
-prototype, not yet validated by a clean install on a separate laptop.
+The 0.1.1 setup executable is 18.08 MiB and its installed files total 43.74
+MiB on the development desktop. The earlier 0.1.0 package passed clean laptop
+installation, offline speech, Edge playback, and uninstall. Repeat those checks
+for 0.1.1; its new word boundary events have only been tested on the desktop.
 The test setup executable is not code-signed, so Windows may show an unknown
 publisher prompt. Obtain it only from the project build you trust.
 
@@ -34,7 +35,9 @@ publisher prompt. Obtain it only from the project build you trust.
 Close Edge and other apps using the voice, then use **Windows Settings → Apps →
 Installed apps → Paradee-SAPI bm_fable → Uninstall**. The installer also adds
 **Paradee-SAPI → Uninstall** to the Start menu. Uninstall removes the voice
-tokens and package files; it does not change a Windows default voice.
+tokens and package files. If you manually made Paradee your Windows default
+voice, select another default before uninstalling so it does not point to a
+removed voice. Installation itself does not change the default.
 
 For an upgrade, close speech apps and run the newer setup package. If Windows
 reports files in use, exit those apps and retry; a reboot may be required to

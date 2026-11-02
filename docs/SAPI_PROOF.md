@@ -206,15 +206,16 @@ for a reversible OneCore test.
   and word boundaries. Sentence audio starts are exact; word audio positions
   are estimated because the Paradee ONNX interface returns waveform only.
   `scripts/test-boundaries.ps1` verified seven word positions against the
-  source text and distinct audio positions through `System.Speech`. Retest
+  source text and distinct audio positions through `System.Speech`. A retest in
   Edge Read Aloud restored word highlighting on the development desktop after
   installing this build. The 0.1.0 laptop installer does not contain this fix;
-  laptop retesting and sentence underline behavior remain open.
+  0.1.1 laptop retesting and sentence underline behavior remain open.
 - Confirm the OneCore token appears and plays in each target Read Aloud picker;
   category enumeration alone does not prove app compatibility.
 - The self-contained setup `.exe` now includes license notices and the app-local
   Visual C++ runtime. Desktop uninstall/reinstall passed. The user confirmed
-  clean laptop installation, offline speech, Edge playback, and uninstall;
+  clean laptop installation, offline speech, Edge playback, and uninstall with
+  0.1.0; a clean laptop retest of 0.1.1 and
   upgrade to a newer package remains open.
 - Offline laptop speech passed. Inspect speech-path network calls and
   unintended text/audio files separately before making a stronger privacy

@@ -28,6 +28,11 @@ boundary events; the user confirmed that Edge Read Aloud restored **word
 highlighting** with it. The clean laptop passed the `0.1.0` build; the new
 `0.1.1` package is published for retesting.
 
+The [next milestone](docs/SPEC.md#next-milestone-all-four-released-voices) is
+to expose all four voices already in the model through one shared runtime.
+The four-voice installer is a separate planned version; this download still
+registers only `bm_fable`.
+
 ## Current test download
 
 This is a **private prerelease for testing**, not a production release. Sign in
