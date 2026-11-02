@@ -1,8 +1,8 @@
 # Install Paradee-SAPI on Windows
 
-The published 0.1.1 installer adds the offline `Paradee bm_fable` voice to
-64-bit Windows SAPI. The local 0.2.0 candidate adds `af_heart`, `bf_isabella`,
-`am_puck`, and `bm_fable` through one shared model and runtime.
+The 0.2.0 installer adds the offline `Paradee af_heart`, `Paradee bf_isabella`,
+`Paradee am_puck`, and `Paradee bm_fable` voices to 64-bit Windows SAPI through
+one shared model and runtime.
 It includes the model, ONNX Runtime, eSpeak NG, and voice registration. Playback
 also includes the app-local Visual C++ runtime files ONNX Runtime needs.
 Playback does not require Python, a browser extension, a local server, or an internet
@@ -12,8 +12,8 @@ for all users.
 ## Install
 
 1. Close Edge and other apps currently speaking with Paradee.
-2. Run the setup executable for the version you are testing and approve the
-   Windows administrator prompt. The installer places files in
+2. Download and run the [Paradee-SAPI 0.2.0 Windows x64 setup executable](https://github.com/jjmlovesgit/paradee-sapi/releases/download/v0.2.0/Paradee-SAPI-0.2.0-x64-Setup.exe),
+   then approve the Windows administrator prompt. The installer places files in
    `C:\Program Files\Paradee-SAPI` and registers its Paradee voices. It does
    not change your default Windows voice.
 3. Open Edge again. Start **Read Aloud**, open **Voice options**, and select
@@ -25,17 +25,15 @@ To check classic SAPI independently, open **Windows Speech Properties** and
 use the **Text to Speech** tab's **Preview Voice** button. A SAPI application
 can also select the installed name `Paradee bm_fable`.
 
-The 0.1.1 setup executable is 18.08 MiB and its installed files total 43.74
-MiB on the development desktop. The earlier 0.1.0 package passed clean laptop
-installation, offline speech, Edge playback, and uninstall. Repeat those checks
-for 0.1.1; its new word boundary events have only been tested on the desktop.
-The test setup executable is not code-signed, so Windows may show an unknown
-publisher prompt. Obtain it only from the project build you trust.
+The setup executable is 18.08 MiB and its installed files total 43.74 MiB on
+the development desktop. The installer is not code-signed, so Windows may show
+an unknown publisher prompt. Verify its checksum from the release page before
+installation.
 
 ## Uninstall or upgrade
 
 Close Edge and other apps using the voice, then use **Windows Settings → Apps →
-Installed apps → Paradee-SAPI bm_fable → Uninstall**. The installer also adds
+Installed apps → Paradee-SAPI → Uninstall**. The installer also adds
 **Paradee-SAPI → Uninstall** to the Start menu. Uninstall removes the voice
 tokens and package files. If you manually made Paradee your Windows default
 voice, select another default before uninstalling so it does not point to a
@@ -54,12 +52,10 @@ The Paradee speech DLL reads the installed model and language data locally and
 does not call a TTS service. A browser or other host app can independently send
 its own data or telemetry; this installer does not control the host app.
 
-The development desktop test confirmed Windows SAPI playback and selection in
-Edge Read Aloud. Chrome Reading mode and Discord did not select this voice in
-the recorded tests. The clean laptop passed the 0.1.0 installer. The 0.1.1
-desktop test restored Edge word highlighting with Paradee; that newer build is
-published for a clean laptop retest. Other Windows apps need individual
-compatibility tests.
+Windows SAPI and Edge Read Aloud have been verified with all four voices, and
+Edge word highlighting works. Chrome Reading mode and Discord did not select
+Paradee in recorded tests. Other Windows apps need individual compatibility
+tests.
 
 ## Troubleshooting
 
