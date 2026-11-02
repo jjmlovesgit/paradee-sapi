@@ -22,6 +22,35 @@ before release. See the
 [installation guide](docs/INSTALL.md), [working spec](docs/SPEC.md), and
 [proof instructions](docs/SAPI_PROOF.md).
 
+## Laptop test download
+
+This is a **private prerelease for testing**, not a production release. Sign in
+to GitHub as a user with access to this repository, then download the
+[Windows x64 installer](https://github.com/jjmlovesgit/paradee-sapi/releases/download/0.1.0-laptop-test/Paradee-SAPI-0.1.0-x64-Setup.exe)
+and [SHA-256 checksum file](https://github.com/jjmlovesgit/paradee-sapi/releases/download/0.1.0-laptop-test/SHA256SUMS.txt).
+The [release page](https://github.com/jjmlovesgit/paradee-sapi/releases/tag/0.1.0-laptop-test)
+also lists both files under **Assets**. A browser that is not signed in to the
+private repository may show 404.
+
+1. On the laptop, verify the downloaded installer in PowerShell with
+   `Get-FileHash .\Paradee-SAPI-0.1.0-x64-Setup.exe -Algorithm SHA256`. The
+   expected SHA-256 is
+   `91f5c76cdfb7e85d4edd89b7be5c70807eec4a64d9bfc0220c81821e7a5368f0`.
+2. Disconnect the laptop from the network, run the installer, and approve the
+   Windows administrator prompt. Installation must finish without downloading
+   anything.
+3. While still offline, open Windows Speech Properties, choose
+   **Paradee bm_fable** on the **Text to Speech** tab, and use **Preview Voice**.
+4. Reconnect, restart Edge, open a page, start **Read Aloud**, and select
+   **Paradee bm_fable** in Voice options. Check commas, questions, and clock
+   times such as `2:00 PM` and `2:15 PM`.
+5. Close Edge and uninstall from **Settings → Apps → Installed apps**. Confirm
+   the voice disappears; run the same installer again if you want to keep it.
+
+Record any missing voice, failed playback, reboot requirement, or installer
+error. The full [installation guide](docs/INSTALL.md) has troubleshooting and
+current compatibility limits.
+
 ## Build the offline installer
 
 On the Windows build desktop, with the pinned Paradee model, ONNX Runtime SDK,
@@ -53,13 +82,13 @@ occupied about 348 MiB, while the int8 model is about 8.5 MB. That development
 environment is not the proposed install package.
 
 The local virtual environment, model cache, cloned upstream source, and audio
-samples are intentionally excluded from this repository. The future build
-instructions will pin upstream commits and model revisions and provide a fully
-offline installation path.
+samples are intentionally excluded from this repository. The installer build
+recipe pins the model revision and runtime file hashes; these assets are
+bundled into the offline setup executable.
 
 The current proof loads inference into the SAPI client process. Its runtime
-assets total about 42.8 MiB unpacked on this desktop. Packaging, quality
-comparison, and laptop acceptance testing remain open.
+assets total about 42.8 MiB unpacked on this desktop. Voice quality comparison
+and clean laptop acceptance testing remain open.
 
 ## Attribution
 
