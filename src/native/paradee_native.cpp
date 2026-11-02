@@ -162,7 +162,7 @@ public:
     ~Espeak() { if (dll_) FreeLibrary(dll_); }
 
     std::wstring Phonemize(const std::wstring& text, int voice_index) const {
-        const bool italian = voice_index == 4;
+        const bool italian = voice_index == 4 || voice_index == 5;
         const bool british = voice_index == 1 || voice_index == 3;
         const char* voice_name = italian ? "Italian" :
             (british ? "English (Great Britain)" : "English (America)");
@@ -268,10 +268,10 @@ public:
         : assets_(assets), espeak_(assets), env_(ORT_LOGGING_LEVEL_WARNING, "paradee-native") {}
 
     std::vector<float> Synthesize(const std::wstring& text, float speed, int voice_index) {
-        if (voice_index < 0 || voice_index > 4) throw std::invalid_argument("Invalid Paradee voice index");
-        const bool italian = voice_index == 4;
+        if (voice_index < 0 || voice_index > 5) throw std::invalid_argument("Invalid Paradee voice index");
+        const bool italian = voice_index == 4 || voice_index == 5;
         if (italian && !is_italian_pack_) throw std::invalid_argument("Italian voice is not available in this package");
-        Ort::Session* session = GetSession(italian);
+        Ort::Session* session = GetSession(voice_index);
         std::vector<float> audio;
         for (const auto& sentence : ParadeeSplitSentences(text)) {
             for (const auto& chunk : PhonemeChunks(espeak_.Phonemize(sentence, voice_index))) {
@@ -310,10 +310,11 @@ public:
     }
 
 private:
-    Ort::Session* GetSession(bool italian) {
-        auto& session = italian ? italian_session_ : english_session_;
+    Ort::Session* GetSession(int voice_index) {
+        auto& session = voice_index == 4 ? sara_session_ : voice_index == 5 ? nicola_session_ : english_session_;
         if (!session) {
-            const std::wstring model = assets_ + (italian ? L"\\if_sara-model_int8.onnx" : L"\\paradee_int8.onnx");
+            const std::wstring model = assets_ + (voice_index == 4 ? L"\\if_sara-model_int8.onnx" :
+                voice_index == 5 ? L"\\im_nicola-model_int8.onnx" : L"\\paradee_int8.onnx");
             Ort::SessionOptions options;
             options.SetIntraOpNumThreads(1);
             options.SetInterOpNumThreads(1);
@@ -333,7 +334,8 @@ private:
     Espeak espeak_;
     Ort::Env env_;
     std::unique_ptr<Ort::Session> english_session_;
-    std::unique_ptr<Ort::Session> italian_session_;
+    std::unique_ptr<Ort::Session> sara_session_;
+    std::unique_ptr<Ort::Session> nicola_session_;
 };
 
 } // namespace

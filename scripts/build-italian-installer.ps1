@@ -8,7 +8,7 @@ $assets = Join-Path $native 'assets'
 $bridge = Join-Path $build 'bridge'
 $stage = Join-Path $build 'stage'
 $baseLock = Get-Content (Join-Path $repo 'packaging\runtime-lock.json') -Raw | ConvertFrom-Json
-$itLock = Get-Content (Join-Path $repo 'packaging\italian-if-sara-lock.json') -Raw | ConvertFrom-Json
+$itLock = Get-Content (Join-Path $repo 'packaging\italian-voices-lock.json') -Raw | ConvertFrom-Json
 if ($Version -notmatch '^\d+\.\d+\.\d+$') { throw 'Version must be major.minor.patch' }
 
 & (Join-Path $PSScriptRoot 'setup-italian-assets.ps1')
@@ -31,6 +31,7 @@ $cache = Join-Path $repo '.cache\italian-pack-assets'
 Copy-Item (Join-Path $loader 'espeak-ng.dll') $assets
 Copy-Item (Join-Path $loader 'espeak-ng-data') $assets -Recurse
 Copy-Item (Join-Path $cache 'if_sara-model_int8.onnx') (Join-Path $assets 'if_sara-model_int8.onnx')
+Copy-Item (Join-Path $cache 'im_nicola-model_int8.onnx') (Join-Path $assets 'im_nicola-model_int8.onnx')
 
 & (Join-Path $PSScriptRoot 'build-bridge.ps1') -OutputDir $bridge -ItalianPack
 if ($LASTEXITCODE -ne 0) { throw 'Italian SAPI bridge build failed' }
@@ -55,7 +56,7 @@ Copy-Item (Join-Path $cache 'teacher-in-loop-LICENSE') (Join-Path $stage 'licens
 Copy-Item (Join-Path $repo 'third_party\NOTICES.md') (Join-Path $stage 'THIRD_PARTY_NOTICES.md')
 @'
 
-Italian voice model: `if_sara`, trained and released by Fabio Angela in the
+Italian voice models: `if_sara` and `im_nicola`, trained and released by Fabio Angela in the
 Teacher in the Loop project under Apache-2.0. Model revision and SHA-256 are
 listed in `runtime-lock-italian.json`. The model derives from Kokoro-82M and
 Paradee. Source: https://github.com/MithrilMan/teacher-in-the-loop .
@@ -63,7 +64,7 @@ Paradee. Source: https://github.com/MithrilMan/teacher-in-the-loop .
 Copy-Item (Join-Path $repo 'docs\ITALIAN_PACK.md') (Join-Path $stage 'ITALIAN_PACK.md')
 
 $runtimePaths = @('paradee_sapi_bridge.dll','onnxruntime.dll','msvcp140.dll','msvcp140_1.dll','vcruntime140.dll','vcruntime140_1.dll',
-    'assets/espeak-ng.dll','assets/if_sara-model_int8.onnx')
+    'assets/espeak-ng.dll','assets/if_sara-model_int8.onnx','assets/im_nicola-model_int8.onnx')
 $hashes = [ordered]@{}
 foreach ($relative in $runtimePaths) {
     $path = Join-Path $stage ($relative.Replace('/', '\'))
@@ -74,7 +75,7 @@ $runtime = [ordered]@{
     packageVersion = $Version
     sourceRepository = $itLock.repository
     sourceRevision = $itLock.revision
-    voice = $itLock.voice
+    voices = $itLock.voices
     onnxRuntimeVersion = $baseLock.onnxRuntimeVersion
     eSpeakNgVersion = $baseLock.espeakNgVersion
     files = $hashes

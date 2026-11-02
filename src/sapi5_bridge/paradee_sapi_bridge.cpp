@@ -440,6 +440,7 @@ STDMETHODIMP CHttpSapi5Engine::SetObjectToken(ISpObjectToken *pToken) {
     m_voiceId = ReadTokenString(m_pToken, L"VoiceId");
 #ifdef PARADEE_ITALIAN_PACK
     if (m_voiceId == L"if_sara") m_voiceIndex = 4;
+    else if (m_voiceId == L"im_nicola") m_voiceIndex = 5;
     else return E_INVALIDARG;
 #else
     if (m_voiceId == L"af_heart") m_voiceIndex = 0;

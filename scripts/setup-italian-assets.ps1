@@ -2,10 +2,11 @@ param([switch] $CheckOnly)
 
 $ErrorActionPreference = 'Stop'
 $repo = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
-$lock = Get-Content (Join-Path $repo 'packaging\italian-if-sara-lock.json') -Raw | ConvertFrom-Json
+$lock = Get-Content (Join-Path $repo 'packaging\italian-voices-lock.json') -Raw | ConvertFrom-Json
 $cache = Join-Path $repo '.cache\italian-pack-assets'
 $files = @(
     @{ Entry = $lock.model; Target = 'if_sara-model_int8.onnx' },
+    @{ Entry = $lock.nicola; Target = 'im_nicola-model_int8.onnx' },
     @{ Entry = $lock.vocab; Target = 'italian-vocab.json' },
     @{ Entry = $lock.license; Target = 'teacher-in-loop-LICENSE' }
 )
@@ -29,4 +30,4 @@ foreach ($item in $files) {
     Move-Item -LiteralPath $temp -Destination $target -Force
     Write-Host "Downloaded and verified $($item.Target)"
 }
-Write-Host 'Pinned Italian if_sara assets are ready.'
+Write-Host 'Pinned Italian voice assets are ready.'

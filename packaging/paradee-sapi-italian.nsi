@@ -11,11 +11,14 @@
 !define APP_NAME "Paradee-SAPI Italian"
 !define VOICE_NAME "Paradee if_sara"
 !define TOKEN "ParadeeSapiIfSara"
+!define NICOLA_TOKEN "ParadeeSapiImNicola"
 !define CLSID "{B17E11A1-9A42-40A6-8DF4-5D0F7DAA3A51}"
 !define INSTALL_DIR "$PROGRAMFILES64\Paradee-SAPI-Italian"
 !define UNINSTALL_KEY "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Paradee-SAPI-Italian"
 !define SAPI_KEY "SOFTWARE\Microsoft\Speech\Voices\Tokens\${TOKEN}"
 !define ONECORE_KEY "SOFTWARE\Microsoft\Speech_OneCore\Voices\Tokens\${TOKEN}"
+!define NICOLA_SAPI_KEY "SOFTWARE\Microsoft\Speech\Voices\Tokens\${NICOLA_TOKEN}"
+!define NICOLA_ONECORE_KEY "SOFTWARE\Microsoft\Speech_OneCore\Voices\Tokens\${NICOLA_TOKEN}"
 !define COM_KEY "SOFTWARE\Classes\CLSID\${CLSID}"
 
 Name "${APP_NAME} ${APP_VERSION}"
@@ -43,6 +46,16 @@ Function .onInit
   StrCmp $0 "" +4
   StrCmp $0 "${CLSID}" +3
     MessageBox MB_ICONSTOP "Another OneCore engine owns the Paradee if_sara token. Setup will not replace it."
+    Abort
+  ReadRegStr $0 HKLM "${NICOLA_SAPI_KEY}" "CLSID"
+  StrCmp $0 "" +4
+  StrCmp $0 "${CLSID}" +3
+    MessageBox MB_ICONSTOP "Another SAPI engine owns the Paradee im_nicola token. Setup will not replace it."
+    Abort
+  ReadRegStr $0 HKLM "${NICOLA_ONECORE_KEY}" "CLSID"
+  StrCmp $0 "" +4
+  StrCmp $0 "${CLSID}" +3
+    MessageBox MB_ICONSTOP "Another OneCore engine owns the Paradee im_nicola token. Setup will not replace it."
     Abort
 FunctionEnd
 
@@ -95,6 +108,35 @@ Section "Install Italian voice" SEC_MAIN
   WriteRegStr HKLM "${ONECORE_KEY}\Attributes" "AssetsDir" "$INSTDIR\assets"
   WriteRegStr HKLM "${ONECORE_KEY}\Attributes" "Rate" "1.0"
 
+  WriteRegStr HKLM "${NICOLA_SAPI_KEY}" "" "Paradee im_nicola"
+  WriteRegStr HKLM "${NICOLA_SAPI_KEY}" "CLSID" "${CLSID}"
+  WriteRegStr HKLM "${NICOLA_SAPI_KEY}" "0410" "Paradee im_nicola"
+  WriteRegStr HKLM "${NICOLA_SAPI_KEY}" "VoiceName" "im_nicola"
+  WriteRegStr HKLM "${NICOLA_SAPI_KEY}" "AssetsDir" "$INSTDIR\assets"
+  WriteRegStr HKLM "${NICOLA_SAPI_KEY}\Attributes" "Name" "Paradee im_nicola"
+  WriteRegStr HKLM "${NICOLA_SAPI_KEY}\Attributes" "VoiceName" "Paradee im_nicola"
+  WriteRegStr HKLM "${NICOLA_SAPI_KEY}\Attributes" "Language" "0410"
+  WriteRegStr HKLM "${NICOLA_SAPI_KEY}\Attributes" "Gender" "Male"
+  WriteRegStr HKLM "${NICOLA_SAPI_KEY}\Attributes" "Age" "Adult"
+  WriteRegStr HKLM "${NICOLA_SAPI_KEY}\Attributes" "Vendor" "Paradee-SAPI"
+  WriteRegStr HKLM "${NICOLA_SAPI_KEY}\Attributes" "VoiceId" "im_nicola"
+  WriteRegStr HKLM "${NICOLA_SAPI_KEY}\Attributes" "AssetsDir" "$INSTDIR\assets"
+  WriteRegStr HKLM "${NICOLA_SAPI_KEY}\Attributes" "Rate" "1.0"
+  WriteRegStr HKLM "${NICOLA_ONECORE_KEY}" "" "Paradee im_nicola"
+  WriteRegStr HKLM "${NICOLA_ONECORE_KEY}" "CLSID" "${CLSID}"
+  WriteRegStr HKLM "${NICOLA_ONECORE_KEY}" "0410" "Paradee im_nicola"
+  WriteRegStr HKLM "${NICOLA_ONECORE_KEY}" "VoiceName" "im_nicola"
+  WriteRegStr HKLM "${NICOLA_ONECORE_KEY}" "AssetsDir" "$INSTDIR\assets"
+  WriteRegStr HKLM "${NICOLA_ONECORE_KEY}\Attributes" "Name" "Paradee im_nicola"
+  WriteRegStr HKLM "${NICOLA_ONECORE_KEY}\Attributes" "VoiceName" "Paradee im_nicola"
+  WriteRegStr HKLM "${NICOLA_ONECORE_KEY}\Attributes" "Language" "0410"
+  WriteRegStr HKLM "${NICOLA_ONECORE_KEY}\Attributes" "Gender" "Male"
+  WriteRegStr HKLM "${NICOLA_ONECORE_KEY}\Attributes" "Age" "Adult"
+  WriteRegStr HKLM "${NICOLA_ONECORE_KEY}\Attributes" "Vendor" "Paradee-SAPI"
+  WriteRegStr HKLM "${NICOLA_ONECORE_KEY}\Attributes" "VoiceId" "im_nicola"
+  WriteRegStr HKLM "${NICOLA_ONECORE_KEY}\Attributes" "AssetsDir" "$INSTDIR\assets"
+  WriteRegStr HKLM "${NICOLA_ONECORE_KEY}\Attributes" "Rate" "1.0"
+
   WriteUninstaller "$INSTDIR\Uninstall.exe"
   WriteRegStr HKLM "${UNINSTALL_KEY}" "DisplayName" "${APP_NAME}"
   WriteRegStr HKLM "${UNINSTALL_KEY}" "DisplayVersion" "${APP_VERSION}"
@@ -117,6 +159,14 @@ Function un.onInit
   StrCmp $0 "HKEY_LOCAL_MACHINE\${ONECORE_KEY}" 0 +3
     MessageBox MB_ICONSTOP "Paradee if_sara is your default voice. Select another default before uninstalling."
     Abort
+  ReadRegStr $0 HKCU "SOFTWARE\Microsoft\Speech\Voices" "DefaultTokenId"
+  StrCmp $0 "HKEY_LOCAL_MACHINE\${NICOLA_SAPI_KEY}" 0 +3
+    MessageBox MB_ICONSTOP "Paradee im_nicola is your default voice. Select another default before uninstalling."
+    Abort
+  ReadRegStr $0 HKCU "SOFTWARE\Microsoft\Speech_OneCore\Voices" "DefaultTokenId"
+  StrCmp $0 "HKEY_LOCAL_MACHINE\${NICOLA_ONECORE_KEY}" 0 +3
+    MessageBox MB_ICONSTOP "Paradee im_nicola is your default voice. Select another default before uninstalling."
+    Abort
 FunctionEnd
 
 Section "Uninstall"
@@ -128,6 +178,12 @@ Section "Uninstall"
   ReadRegStr $0 HKLM "${ONECORE_KEY}" "AssetsDir"
   StrCmp $0 "$INSTDIR\assets" 0 +2
     DeleteRegKey HKLM "${ONECORE_KEY}"
+  ReadRegStr $0 HKLM "${NICOLA_SAPI_KEY}" "AssetsDir"
+  StrCmp $0 "$INSTDIR\assets" 0 +2
+    DeleteRegKey HKLM "${NICOLA_SAPI_KEY}"
+  ReadRegStr $0 HKLM "${NICOLA_ONECORE_KEY}" "AssetsDir"
+  StrCmp $0 "$INSTDIR\assets" 0 +2
+    DeleteRegKey HKLM "${NICOLA_ONECORE_KEY}"
   ReadRegStr $0 HKLM "${COM_KEY}\InprocServer32" ""
   StrCmp $0 "$INSTDIR\paradee_sapi_bridge.dll" 0 +2
     DeleteRegKey HKLM "${COM_KEY}"
