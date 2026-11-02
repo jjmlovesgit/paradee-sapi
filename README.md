@@ -15,6 +15,19 @@ or cloud TTS request.
 Both installers are self-contained Windows x64 packages. The Italian pack can
 be installed alongside the English pack or by itself.
 
+## Accessibility and NVDA
+
+Paradee-SAPI has been tested with [NVDA 2026.3](https://www.nvaccess.org/download-nvda/)
+through its 64-bit SAPI 5 synthesizer driver. NVDA discovered all six installed
+Paradee voices. Using `Paradee bm_fable`, line and word navigation, continuous
+reading, WASAPI audio output, and interruption of speech when the cursor moved
+all worked. The user reported that the voice was responsive and sounded very
+good during the test.
+
+This is an initial compatibility result rather than formal accessibility
+certification. Accelerated speech and extended browser browse-mode testing are
+still planned.
+
 ## English voice pack
 
 The four English voices use the Paradee v1.2 model, with one shared model and runtime:
