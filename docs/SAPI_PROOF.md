@@ -209,8 +209,30 @@ for a reversible OneCore test.
   word boundaries while the user still observes no highlighting there.
 - Confirm the OneCore token appears and plays in each target Read Aloud picker;
   category enumeration alone does not prove app compatibility.
-- Make a self-contained offline installer, include license notices and any
-  required Visual C++ runtime, and test clean install/uninstall on the laptop.
+- The self-contained setup `.exe` now includes license notices and the app-local
+  Visual C++ runtime. Desktop uninstall/reinstall passed; clean installation
+  and upgrade tests on the laptop remain open.
 - Disconnect the laptop from the network and verify synthesis plus absence of
   speech-path network calls and unintended text/audio files.
 - Add an x86 engine only if a required 32-bit Windows application needs it.
+
+## Offline setup proof on the development desktop
+
+The 0.1.0 NSIS setup executable is 18,958,575 bytes. It contains the SAPI DLL,
+ONNX Runtime, the Paradee model/configuration, eSpeak NG DLL/data, four app-local
+Visual C++ runtime DLLs, the installation guide, and third-party notices. The
+staged manifest verifies 382 files, and a copy of the staged runtime rendered
+speech from a separate folder without relying on the project path.
+
+The visible installer completed after administrator approval. It created
+`C:\Program Files\Paradee-SAPI`, registered the classic SAPI and OneCore voice
+tokens against that installed path, and added an Installed Apps uninstall entry.
+All 382 installed payload files matched the staged manifest. The
+`scripts/test-installed.ps1` check selected `Paradee bm_fable` through
+`System.Speech` and rendered 220,800 audio bytes. The user then selected it in
+Edge Read Aloud and reported that it played and sounded good from the packaged
+installation. With Edge closed, silent uninstall removed the voice token,
+COM registration, Installed Apps entry, and package directory. Reinstalling
+the same setup restored all 382 files and passed the SAPI speech test again.
+Upgrade to a newer package and disconnected laptop operation remain to be
+verified.

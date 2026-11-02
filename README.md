@@ -15,8 +15,28 @@ that text to a speech service.
 eSpeak NG inside the calling process, with no Python server at playback.
 Classic SAPI and OneCore voice tokens are registered. Edge lists and plays
 `Paradee bm_fable`; punctuation and phrasing quality remain an open release gate.
-There is no offline installer yet. See
-[the working spec](docs/SPEC.md) and [proof instructions](docs/SAPI_PROOF.md).
+An offline x64 setup `.exe` can now be built from local cached runtime assets.
+It installed and passed SAPI and Edge Read Aloud playback on the development
+desktop, and uninstall/reinstall passed there. A clean laptop test remains
+before release. See the
+[installation guide](docs/INSTALL.md), [working spec](docs/SPEC.md), and
+[proof instructions](docs/SAPI_PROOF.md).
+
+## Build the offline installer
+
+On the Windows build desktop, with the pinned Paradee model, ONNX Runtime SDK,
+eSpeak NG wheel, Visual Studio C++ tools, and build-time Python dependencies
+already cached, run:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\build-installer.ps1
+```
+
+The script verifies the locked runtime hashes, stages the playback assets and
+license notices, and creates `dist\Paradee-SAPI-0.1.0-x64-Setup.exe`. It uses a
+checksum-verified portable NSIS compiler if one is not already cached. The
+installer itself is self-contained and does not download anything. It is an
+`.exe` setup package; an `.msi` is not built yet.
 
 ## Milestone 1
 
