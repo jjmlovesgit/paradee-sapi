@@ -183,6 +183,20 @@ for a reversible OneCore test.
   has not yet been heard in Edge. Compare `build/diagnostics/punctuation_installed.wav`
   (current installed voice) with `build/diagnostics/punctuation_candidate.wav`,
   then check `build/diagnostics/numbers_candidate.wav` by ear before promoting it.
+  The user heard an improvement in punctuation but found the candidate still
+  sounded word-by-word rather than like a fluent sentence. An A/B render of a
+  longer sentence sounded better through upstream Paradee's Misaki G2P than
+  through the native eSpeak conversion. Keep this candidate out of the installed
+  Edge voice until a native phonemizer passes matched-sentence listening tests.
+- The next quality gate is phoneme parity with upstream Misaki for `bm_fable`.
+  Upstream uses its British English lexicon and contextual rules with eSpeak
+  only as fallback; the current native engine applies a conversion to eSpeak
+  output for every word. The British gold and silver lexicon JSON files in
+  the development Misaki package total about 6.5 MB, so a compiled local
+  lexicon may preserve a small offline runtime. A direct JSON lookup alone
+  would not reproduce context-dependent pronunciation, stress, and number
+  handling; compare phoneme strings and audio on representative sentences
+  before choosing a native port design.
 - Listen to matched native and upstream `bm_fable` samples and check
   pronunciation and naturalness. eSpeak plus phoneme conversion may differ
   from the upstream Python Misaki path.
