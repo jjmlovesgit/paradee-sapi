@@ -11,6 +11,7 @@
 #include <array>
 #include <cmath>
 #include <cstdint>
+#include <cwctype>
 #include <fstream>
 #include <iostream>
 #include <memory>
@@ -88,21 +89,38 @@ public:
     ~Espeak() { if (dll_) FreeLibrary(dll_); }
 
     std::wstring Phonemize(const std::wstring& text) const {
-        std::string utf8 = ToUtf8(text);
-        const void* ptr = utf8.c_str();
-        std::string result;
-        while (ptr) {
-            const char* clause = phonemes_(&ptr, 1, 2);
-            if (!clause) break;
-            if (!result.empty()) result += ' ';
-            result += clause;
+        std::wstring result;
+        size_t start = 0;
+        for (size_t i = 0; i <= text.size(); ++i) {
+            const bool inside_number = i > 0 && i + 1 < text.size() &&
+                std::iswdigit(text[i - 1]) && std::iswdigit(text[i + 1]);
+            const bool punctuation = i < text.size() &&
+                (((text[i] == L',' || text[i] == L'.') && !inside_number) ||
+                 text[i] == L';' || text[i] == L':' || text[i] == L'!' ||
+                 text[i] == L'?' || text[i] == L'…');
+            if (!punctuation && i != text.size()) continue;
+            const auto clause_text = text.substr(start, i - start);
+            if (!clause_text.empty()) {
+                std::string utf8 = ToUtf8(clause_text);
+                const void* ptr = utf8.c_str();
+                std::string clause_result;
+                while (ptr) {
+                    const char* clause = phonemes_(&ptr, 1, 2);
+                    if (!clause) break;
+                    if (!clause_result.empty()) clause_result += ' ';
+                    clause_result += clause;
+                }
+                if (!clause_result.empty()) {
+                    if (!result.empty() && !std::iswspace(result.back())) result += L' ';
+                    result += FromUtf8(clause_result);
+                }
+            }
+            if (punctuation) {
+                result += text[i];
+                start = i + 1;
+            }
         }
-        if (!text.empty()) {
-            wchar_t last = text.back();
-            if (last == L'.' || last == L'!' || last == L'?' || last == L',' || last == L';' || last == L':')
-                result += static_cast<char>(last);
-        }
-        return ToMisakiBritish(FromUtf8(result));
+        return ToMisakiBritish(result);
     }
 
 private:
@@ -120,10 +138,23 @@ std::vector<int64_t> Tokens(const std::wstring& phonemes) {
     for (wchar_t c : phonemes) {
         auto found = kParadeeVocab.find(c);
         if (found != kParadeeVocab.end()) ids.push_back(found->second);
-        if (ids.size() == 511) break;
     }
+    if (ids.size() > 511) throw std::runtime_error("Phoneme chunk exceeds model limit");
     ids.push_back(0);
     return ids;
+}
+
+std::vector<std::wstring> PhonemeChunks(std::wstring phonemes) {
+    std::vector<std::wstring> chunks;
+    while (phonemes.size() > 510) {
+        size_t cut = phonemes.rfind(L' ', 509);
+        if (cut == std::wstring::npos || cut == 0) cut = 510;
+        chunks.push_back(phonemes.substr(0, cut));
+        phonemes.erase(0, cut);
+        while (!phonemes.empty() && std::iswspace(phonemes.front())) phonemes.erase(0, 1);
+    }
+    if (!phonemes.empty()) chunks.push_back(std::move(phonemes));
+    return chunks;
 }
 
 void WriteWav(const std::wstring& path, const float* samples, size_t count) {
@@ -158,23 +189,28 @@ public:
     }
 
     std::vector<float> Synthesize(const std::wstring& text, float speed) {
-        auto phonemes = espeak_.Phonemize(text);
-        auto ids = Tokens(phonemes);
-        Ort::MemoryInfo cpu = Ort::MemoryInfo::CreateCpu(OrtArenaAllocator, OrtMemTypeDefault);
-        std::array<int64_t, 2> ids_shape{1, static_cast<int64_t>(ids.size())};
-        std::array<int64_t, 1> scalar_shape{1};
-        int64_t voice = 3;
-        std::array<Ort::Value, 3> inputs = {
-            Ort::Value::CreateTensor<int64_t>(cpu, ids.data(), ids.size(), ids_shape.data(), ids_shape.size()),
-            Ort::Value::CreateTensor<float>(cpu, &speed, 1, scalar_shape.data(), scalar_shape.size()),
-            Ort::Value::CreateTensor<int64_t>(cpu, &voice, 1, scalar_shape.data(), scalar_shape.size()),
-        };
-        const char* input_names[] = {"input_ids", "speed", "voice"};
-        const char* output_names[] = {"waveform"};
-        auto outputs = session_->Run(Ort::RunOptions{nullptr}, input_names, inputs.data(), inputs.size(), output_names, 1);
-        auto info = outputs[0].GetTensorTypeAndShapeInfo();
-        const float* data = outputs[0].GetTensorData<float>();
-        return {data, data + info.GetElementCount()};
+        std::vector<float> audio;
+        for (const auto& sentence : ParadeeSplitSentences(text)) {
+            for (const auto& chunk : PhonemeChunks(espeak_.Phonemize(sentence))) {
+                auto ids = Tokens(chunk);
+                Ort::MemoryInfo cpu = Ort::MemoryInfo::CreateCpu(OrtArenaAllocator, OrtMemTypeDefault);
+                std::array<int64_t, 2> ids_shape{1, static_cast<int64_t>(ids.size())};
+                std::array<int64_t, 1> scalar_shape{1};
+                int64_t voice = 3;
+                std::array<Ort::Value, 3> inputs = {
+                    Ort::Value::CreateTensor<int64_t>(cpu, ids.data(), ids.size(), ids_shape.data(), ids_shape.size()),
+                    Ort::Value::CreateTensor<float>(cpu, &speed, 1, scalar_shape.data(), scalar_shape.size()),
+                    Ort::Value::CreateTensor<int64_t>(cpu, &voice, 1, scalar_shape.data(), scalar_shape.size()),
+                };
+                const char* input_names[] = {"input_ids", "speed", "voice"};
+                const char* output_names[] = {"waveform"};
+                auto outputs = session_->Run(Ort::RunOptions{nullptr}, input_names, inputs.data(), inputs.size(), output_names, 1);
+                auto info = outputs[0].GetTensorTypeAndShapeInfo();
+                const float* data = outputs[0].GetTensorData<float>();
+                audio.insert(audio.end(), data, data + info.GetElementCount());
+            }
+        }
+        return audio;
     }
 
 private:
@@ -184,6 +220,28 @@ private:
 };
 
 } // namespace
+
+std::vector<std::wstring> ParadeeSplitSentences(const std::wstring& text) {
+    std::vector<std::wstring> sentences;
+    size_t start = 0;
+    auto append = [&](size_t end) {
+        while (start < end && std::iswspace(text[start])) ++start;
+        while (end > start && std::iswspace(text[end - 1])) --end;
+        if (end > start) sentences.push_back(text.substr(start, end - start));
+    };
+    for (size_t i = 0; i < text.size(); ++i) {
+        if (text[i] == L'\n' || text[i] == L'\r') {
+            append(i);
+            start = i + 1;
+        } else if ((text[i] == L'.' || text[i] == L'!' || text[i] == L'?' || text[i] == L'…') &&
+                   (i + 1 == text.size() || std::iswspace(text[i + 1]))) {
+            append(i + 1);
+            start = i + 1;
+        }
+    }
+    append(text.size());
+    return sentences;
+}
 
 std::vector<float> ParadeeSynthesize(const std::wstring& text, const std::wstring& assets_dir, float speed) {
     static std::mutex mutex;

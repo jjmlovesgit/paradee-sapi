@@ -471,20 +471,40 @@ STDMETHODIMP CHttpSapi5Engine::Speak(
         L" frag=" + std::to_wstring(fragRate) +
         L" speed=" + std::to_wstring((double)effectiveSpeed));
 
-    std::vector<unsigned char> pcm;
-#ifdef PARADEE_NATIVE_ENGINE
-    try {
-        auto audio = ParadeeSynthesize(text, m_assetsDir, effectiveSpeed);
-        pcm.resize(audio.size() * sizeof(int16_t));
-        for (size_t i = 0; i < audio.size(); ++i) {
-            auto sample = static_cast<int16_t>(std::clamp(audio[i], -1.0f, 1.0f) * 32767);
-            memcpy(pcm.data() + i * sizeof(int16_t), &sample, sizeof(sample));
+    const size_t CHUNK = 32768;
+    auto writePcm = [&](const std::vector<unsigned char>& pcm) -> HRESULT {
+        for (size_t off = 0; off < pcm.size(); off += CHUNK) {
+            if (ShouldAbort(pOut)) return S_OK;
+            size_t n = (pcm.size() - off < CHUNK) ? (pcm.size() - off) : CHUNK;
+            ULONG written = 0;
+            HRESULT hr = pOut->Write(pcm.data() + off, (ULONG)n, &written);
+            if (FAILED(hr)) {
+                Log(L"Speak Write failed hr=" + std::to_wstring((long)hr));
+                return hr;
+            }
         }
-    } catch (const std::exception& error) {
-        Log(L"Speak native synthesis failed");
-        return E_FAIL;
+        return S_OK;
+    };
+#ifdef PARADEE_NATIVE_ENGINE
+    for (const auto& sentence : ParadeeSplitSentences(text)) {
+        if (ShouldAbort(pOut)) return S_OK;
+        std::vector<unsigned char> pcm;
+        try {
+            auto audio = ParadeeSynthesize(sentence, m_assetsDir, effectiveSpeed);
+            pcm.resize(audio.size() * sizeof(int16_t));
+            for (size_t i = 0; i < audio.size(); ++i) {
+                auto sample = static_cast<int16_t>(std::clamp(audio[i], -1.0f, 1.0f) * 32767);
+                memcpy(pcm.data() + i * sizeof(int16_t), &sample, sizeof(sample));
+            }
+        } catch (const std::exception& error) {
+            Log(L"Speak native synthesis failed");
+            return E_FAIL;
+        }
+        HRESULT hr = writePcm(pcm);
+        if (FAILED(hr)) return hr;
     }
 #else
+    std::vector<unsigned char> pcm;
     std::vector<unsigned char> wav;
     if (!HttpPost(m_endpoint, m_path, m_provider, m_model, m_voiceId, text,
                   effectiveSpeed, m_timeoutMs, wav)) {
@@ -505,22 +525,9 @@ STDMETHODIMP CHttpSapi5Engine::Speak(
         Log(L"Speak unsupported wav fmt");
         return E_FAIL;
     }
+    HRESULT hr = writePcm(pcm);
+    if (FAILED(hr)) return hr;
 #endif
-
-    const size_t CHUNK = 32768;
-    for (size_t off = 0; off < pcm.size(); off += CHUNK) {
-        if (ShouldAbort(pOut)) {
-            Log(L"Speak abort");
-            return S_OK;
-        }
-        size_t n = (pcm.size() - off < CHUNK) ? (pcm.size() - off) : CHUNK;
-        ULONG written = 0;
-        HRESULT hr = pOut->Write(pcm.data() + off, (ULONG)n, &written);
-        if (FAILED(hr)) {
-            Log(L"Speak Write failed hr=" + std::to_wstring((long)hr));
-            return hr;
-        }
-    }
     Log(L"Speak ok");
     return S_OK;
 }

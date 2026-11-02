@@ -11,9 +11,10 @@ that text to a speech service.
 
 **Status:** the native x64 SAPI proof works on the Windows development desktop.
 `Paradee bm_fable` appears in the installed voice list and speaks through
-`System.Speech`. The engine runs ONNX Runtime and eSpeak NG inside the calling
-process, with no Python server at playback. Classic SAPI and OneCore voice
-tokens are registered, but target Read Aloud pickers have not been tested.
+`System.Speech` and Microsoft Edge Read Aloud. The engine runs ONNX Runtime and
+eSpeak NG inside the calling process, with no Python server at playback.
+Classic SAPI and OneCore voice tokens are registered. Edge lists and plays
+`Paradee bm_fable`; punctuation and phrasing quality remain an open release gate.
 There is no offline installer yet. See
 [the working spec](docs/SPEC.md) and [proof instructions](docs/SAPI_PROOF.md).
 

@@ -175,6 +175,14 @@ for a reversible OneCore test.
 
 ## Remaining gates
 
+- A candidate native phonemization change now preserves internal commas,
+  semicolons, colons, and sentence-final punctuation as model input tokens.
+  It also splits longer text before the model's 510-phoneme limit rather than
+  silently truncating it. The standalone renderer and an isolated bridge DLL
+  build pass. The installed SAPI DLL has not been replaced, and the candidate
+  has not yet been heard in Edge. Compare `build/diagnostics/punctuation_installed.wav`
+  (current installed voice) with `build/diagnostics/punctuation_candidate.wav`,
+  then check `build/diagnostics/numbers_candidate.wav` by ear before promoting it.
 - Listen to matched native and upstream `bm_fable` samples and check
   pronunciation and naturalness. eSpeak plus phoneme conversion may differ
   from the upstream Python Misaki path.

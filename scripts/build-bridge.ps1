@@ -1,10 +1,11 @@
+param([string] $OutputDir = 'build\sapi5_bridge')
 $ErrorActionPreference = 'Stop'
 $repo = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 $src = Join-Path $repo 'src\sapi5_bridge'
 $nativeSrc = Join-Path $repo 'src\native'
 $nativeBuild = Join-Path $repo 'build\native'
 $ort = Join-Path $repo '.cache\ort-native\onnxruntime-win-x64-1.31.1'
-$out = Join-Path $repo 'build\sapi5_bridge'
+$out = if ([IO.Path]::IsPathRooted($OutputDir)) { $OutputDir } else { Join-Path $repo $OutputDir }
 New-Item -ItemType Directory -Path $out -Force | Out-Null
 if (-not (Test-Path (Join-Path $nativeBuild 'vocab.h'))) {
     & (Join-Path $PSScriptRoot 'build-native.ps1')
