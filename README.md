@@ -1,11 +1,13 @@
 # Paradee-SAPI
 
-Paradee-SAPI makes four local Paradee neural voices available to Windows
+Paradee-SAPI makes local neural voices available to Windows
 applications through SAPI 5 and OneCore voice registration. Speech synthesis
 runs on the CPU, on the device, without a browser extension, background server,
 or cloud TTS request.
 
-The voices use the Paradee v1.2 model, with one shared model and runtime:
+## English voice pack
+
+The four English voices use the Paradee v1.2 model, with one shared model and runtime:
 
 | Voice | Style | Pronunciation |
 | --- | --- | --- |
@@ -19,7 +21,20 @@ Edge Read Aloud lists and plays all four voices, with word highlighting. Voice
 selection is controlled by each application; registering Paradee does not make
 it the default voice in every Windows app.
 
-## Offline installation
+## Italian voice pack
+
+The separate Italian installer provides `Paradee if_sara` and `Paradee im_nicola`.
+Each uses its own Italian student model; the pack shares the SAPI runtime and
+Italian eSpeak NG frontend. It can be installed alongside the English pack or
+on its own. Both voices play in Edge Read Aloud with word highlighting.
+
+Download the [Italian Windows x64 installer](https://github.com/jjmlovesgit/paradee-sapi/releases/download/v0.2.0-italian-preview.1/Paradee-SAPI-Italian-0.2.0-x64-Setup.exe).
+After installing, fully stop Edge, including background `msedge.exe` processes,
+and reopen it to refresh the voice list. The two-voice Italian installer passed
+clean laptop checks for installation, both Edge voices, offline speech, and
+uninstallation. See the [Italian pack guide](docs/ITALIAN_PACK.md).
+
+## English offline installation
 
 Download and run the [Windows x64 setup executable](https://github.com/jjmlovesgit/paradee-sapi/releases/download/v0.2.0/Paradee-SAPI-0.2.0-x64-Setup.exe),
 then approve the administrator prompt. The installer registers the four voices
@@ -30,7 +45,7 @@ uninstallation, troubleshooting, and compatibility details.
 
 ## Size and memory
 
-The four-voice installer is about **18.08 MiB**; installed files total about
+The English four-voice installer is about **18.08 MiB**; installed files total about
 **43.74 MiB**. The int8 model is about **8.5 MB**. Model file size is only one
 part of runtime memory use.
 
@@ -44,20 +59,22 @@ was every 20 ms, so brief spikes may be missed. See [the measurement record](doc
 
 ## Build
 
-On Windows, with the pinned model and build dependencies available locally,
-build the four-voice offline installer with:
+On Windows, with the pinned models and build dependencies available locally,
+build either offline installer with:
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\build-installer.ps1 -Version 0.2.0 -FourVoices
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\build-italian-installer.ps1 -Version 0.2.0
 ```
 
 The build verifies dependency hashes and produces
-`dist\Paradee-SAPI-0.2.0-x64-Setup.exe`. The installer is self-contained. The
-project currently packages an `.exe` installer; it does not build an `.msi`.
+the setup executables in `dist`. Each installer is self-contained. The project
+currently packages `.exe` installers; it does not build an `.msi`.
 
 ## Project details
 
 - [Installation guide](docs/INSTALL.md)
+- [Italian pack guide](docs/ITALIAN_PACK.md)
 - [Product specification and validation record](docs/SPEC.md)
 - [SAPI proof and resource measurements](docs/SAPI_PROOF.md)
 - [Third party notices](third_party)

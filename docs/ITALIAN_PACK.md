@@ -47,5 +47,5 @@ Both Italian voices enumerated through installed Windows SAPI on the desktop.
 Nicola spoke an accented Italian sentence through SAPI. The user confirmed
 Sara and Nicola both play in Edge Read Aloud with word highlighting. Edge
 listed the newly installed voice after its background processes were stopped
-and the browser reopened. Clean-laptop install, offline playback, and
-uninstall checks remain for this two-voice package.
+and the browser reopened. On a clean laptop, the user confirmed installation,
+both Edge voices, offline speech, and uninstallation for the two-voice pack.
