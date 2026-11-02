@@ -387,6 +387,7 @@ private:
     std::wstring     m_model;
     std::wstring     m_voiceId;
     std::wstring     m_assetsDir;
+    int              m_voiceIndex = 3;
     float            m_speed;
     DWORD            m_timeoutMs;
 };
@@ -427,6 +428,12 @@ STDMETHODIMP CHttpSapi5Engine::SetObjectToken(ISpObjectToken *pToken) {
 #ifdef PARADEE_NATIVE_ENGINE
     m_assetsDir = ReadTokenString(m_pToken, L"AssetsDir");
     if (m_assetsDir.empty()) return E_INVALIDARG;
+    m_voiceId = ReadTokenString(m_pToken, L"VoiceId");
+    if (m_voiceId == L"af_heart") m_voiceIndex = 0;
+    else if (m_voiceId == L"bf_isabella") m_voiceIndex = 1;
+    else if (m_voiceId == L"am_puck") m_voiceIndex = 2;
+    else if (m_voiceId == L"bm_fable") m_voiceIndex = 3;
+    else return E_INVALIDARG;
 #else
     m_endpoint = ReadTokenString(m_pToken, L"Endpoint");
     if (m_endpoint.empty()) m_endpoint = L"http://127.0.0.1:5057";
@@ -541,7 +548,7 @@ STDMETHODIMP CHttpSapi5Engine::Speak(
         textCursor = textStart + sentence.size();
         std::vector<unsigned char> pcm;
         try {
-            auto audio = ParadeeSynthesize(sentence, m_assetsDir, effectiveSpeed);
+            auto audio = ParadeeSynthesize(sentence, m_assetsDir, effectiveSpeed, m_voiceIndex);
             pcm.resize(audio.size() * sizeof(int16_t));
             for (size_t i = 0; i < audio.size(); ++i) {
                 auto sample = static_cast<int16_t>(std::clamp(audio[i], -1.0f, 1.0f) * 32767);

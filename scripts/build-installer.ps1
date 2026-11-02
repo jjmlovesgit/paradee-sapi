@@ -1,4 +1,4 @@
-param([string] $Version = '0.1.0')
+param([string] $Version = '0.1.0', [switch] $FourVoices)
 
 $ErrorActionPreference = 'Stop'
 $repo = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
@@ -9,6 +9,12 @@ $native = Join-Path $repo 'build\native'
 $lock = Get-Content -LiteralPath (Join-Path $repo 'packaging\runtime-lock.json') -Raw | ConvertFrom-Json
 
 if ($Version -notmatch '^\d+\.\d+\.\d+$') { throw 'Version must be major.minor.patch' }
+if ($FourVoices -and [version]$Version -lt [version]'0.2.0') {
+    throw 'Four-voice packages must use version 0.2.0 or newer'
+}
+if (-not $FourVoices -and [version]$Version -ge [version]'0.2.0') {
+    throw 'Version 0.2.0 or newer requires -FourVoices'
+}
 if (-not (Test-Path -LiteralPath (Join-Path $native 'assets\paradee_int8.onnx'))) {
     & (Join-Path $PSScriptRoot 'build-native.ps1')
 } else {
@@ -89,7 +95,9 @@ if (-not (Test-Path -LiteralPath $compiler)) { throw "NSIS compiler missing: $co
 $dist = Join-Path $repo 'dist'
 New-Item -ItemType Directory -Path $dist -Force | Out-Null
 $output = Join-Path $dist "Paradee-SAPI-$Version-x64-Setup.exe"
-& $compiler "/DAPP_VERSION=$Version" "/DSTAGE_DIR=$stage" "/DOUT_FILE=$output" (Join-Path $repo 'packaging\paradee-sapi.nsi')
+$defines = @("/DAPP_VERSION=$Version", "/DSTAGE_DIR=$stage", "/DOUT_FILE=$output")
+if ($FourVoices) { $defines += '/DFOUR_VOICES' }
+& $compiler @defines (Join-Path $repo 'packaging\paradee-sapi.nsi')
 if ($LASTEXITCODE -ne 0) { throw "NSIS build failed: $LASTEXITCODE" }
 Write-Host "Built offline installer: $output"
 Write-Host "SHA256: $((Get-FileHash -Algorithm SHA256 -LiteralPath $output).Hash)"

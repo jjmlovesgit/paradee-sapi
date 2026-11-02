@@ -58,8 +58,8 @@ Package all four tokens against one installed DLL, model, and asset directory.
 Keep the model loaded once per host process. Installation and uninstall must
 add and remove all four tokens without affecting unrelated voices. Do not
 silently change the Windows default during installation; if the user has set
-Paradee as the default before uninstall, restore a valid remaining voice
-instead of leaving a dangling default token. An upgrade from `0.1.1` must
+Paradee as the default before uninstall, require a valid remaining default
+before removing its token. An upgrade from `0.1.1` must
 retain working `bm_fable` and add the three new voices; a rollback to `0.1.1`
 must remove the new tokens. Version and publish the four-voice package
 separately from 0.1.1.
