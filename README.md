@@ -39,6 +39,22 @@ installed SAPI checks, and Edge playback of all four voices passed. Uninstall,
 rollback, and clean-laptop checks remain before it replaces the published test
 download.
 
+## Memory and installed size
+
+The four-voice `0.2.0` desktop candidate installs to about **43.74 MiB**; its
+offline setup executable is about **18.08 MiB**. The Paradee int8 model itself
+is about **8.5 MB**, but that is not the memory footprint of the working SAPI
+host.
+
+On November 2, 2026, a fresh 64-bit Windows PowerShell SAPI host measured about
+**78.7 MiB working set before voice selection**, **142 MiB after warm speech**,
+and a **236 MiB sampled peak** while speaking. Switching among all four voices
+kept working set between **140.7 and 141.7 MiB**. These figures include
+PowerShell, SAPI, ONNX Runtime, eSpeak NG, the model, and audio buffers in the
+same process. They do not isolate the model or measure Edge's memory use. Peak
+sampling was every 20 ms, so very brief spikes may be missed. See
+[`docs/SAPI_PROOF.md`](docs/SAPI_PROOF.md) for the measurement details.
+
 ## Current test download
 
 This is a **private prerelease for testing**, not a production release. Sign in
