@@ -38,11 +38,10 @@ clipboard when a copy-based fallback is needed. Test on Edge, Discord, and
 Word with short and multi-paragraph selections.
 
 SAPI registration remains useful for apps that select SAPI voices. It does
-not make Paradee appear in every application's own voice picker. In
-particular, Edge's built-in Read aloud picker did not list Paradee on the
-development desktop. The installed executable's selected-text reader is a
-separate user action and must not be described as integration with Edge's
-built-in Read aloud button.
+not make Paradee appear in every application's own voice picker. Edge's
+built-in Read Aloud picker now lists and plays Paradee on the development
+desktop. The planned selected-text reader is a separate user action for apps
+that do not select the SAPI voice.
 
 ## Acceptance gates
 
@@ -97,8 +96,11 @@ WAV and `System.Speech.GetInstalledVoices()` listed `Paradee bm_fable` after
 machine-wide registration. `SelectVoice` completed playback without the
 earlier Python server. Classic Windows Speech Properties also listed and
 played Paradee. After a Windows reboot, Edge Read Aloud listed and played
-Paradee alongside Kokoro voices, although Paradee's punctuation and phrasing
-need improvement. The user reports that both Paradee and Kokoro voices lose
+Paradee alongside Kokoro voices. Subsequent native builds improved comma and
+sentence phrasing and normalized clock times such as `2:00 PM`; the user
+reported a good result in Edge. Matched-sentence listening still found the
+upstream Misaki phonemizer more fluent, so pronunciation parity remains open.
+The user reports that both Paradee and Kokoro voices lose
 Edge's word highlighting and underline; Paradee emits no SAPI word-boundary
 events today. Discord desktop TTS played Microsoft David despite Paradee
 being the classic SAPI default; Windows' WinRT speech API enumerated only
