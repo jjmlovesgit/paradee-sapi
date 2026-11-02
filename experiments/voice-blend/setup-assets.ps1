@@ -49,4 +49,27 @@ foreach ($entry in $lock.files) {
         throw
     }
 }
+$speaker = $lock.speaker_model
+if ($speaker.path -ne 'voxceleb_resnet34.onnx' -or $speaker.sha256 -notmatch '^[0-9a-f]{64}$' -or
+    $speaker.repo -ne 'Wespeaker/wespeaker-voxceleb-resnet34' -or
+    $speaker.revision -notmatch '^[0-9a-f]{40}$') {
+    throw 'Invalid speaker model lock entry'
+}
+$speakerTarget = Join-Path $lab $speaker.path
+$speakerValid = (Test-Path -LiteralPath $speakerTarget) -and
+    (Get-Item -LiteralPath $speakerTarget).Length -eq $speaker.bytes -and
+    (Get-FileHash -LiteralPath $speakerTarget -Algorithm SHA256).Hash.ToLowerInvariant() -eq $speaker.sha256
+if (-not $speakerValid) {
+    if ($CheckOnly) { throw "Speaker model missing or hash mismatch: $speakerTarget" }
+    $temp = "$speakerTarget.partial"
+    $uri = "https://huggingface.co/$($speaker.repo)/resolve/$($speaker.revision)/$($speaker.path)"
+    & curl.exe --fail --location --silent --show-error --retry 3 --retry-delay 2 --continue-at - --output $temp $uri
+    if ($LASTEXITCODE -ne 0) { throw 'Speaker model download failed' }
+    if ((Get-Item -LiteralPath $temp).Length -ne $speaker.bytes -or
+        (Get-FileHash -LiteralPath $temp -Algorithm SHA256).Hash.ToLowerInvariant() -ne $speaker.sha256) {
+        throw 'Speaker model failed hash or size check'
+    }
+    Move-Item -LiteralPath $temp -Destination $speakerTarget -Force
+}
+Write-Host "Verified $($speaker.path)"
 Write-Host "Kokoro Voice Lab assets ready: $lab"

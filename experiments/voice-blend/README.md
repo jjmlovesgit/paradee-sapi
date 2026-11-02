@@ -40,7 +40,8 @@ files, but those files are in
 [`onnx-community/Kokoro-82M-v1.0-ONNX`](https://huggingface.co/onnx-community/Kokoro-82M-v1.0-ONNX).
 `assets-lock.json` pins model revision
 `1939ad2a8e416c0acfeecc08a694d14ef25f2231` and SHA-256 for the
-177 MB ONNX model, tokenizer/config files, and all 28 English voice bins.
+177 MB ONNX model, tokenizer/config files, all 28 English voice bins, and a
+26 MB speaker comparison model. The latter is used only to rank auditions.
 `setup-assets.ps1` downloads and verifies them under `.cache/kokoro-voice-lab`;
 it resumes interrupted downloads. `setup-env.ps1` creates an isolated Python
 3.12 environment from `requirements-lock.txt` and installs a hash-checked
@@ -66,3 +67,28 @@ first match; GPU setup is optional.
 5. Decide separately whether the blend justifies Kokoro teacher-data
    generation and Paradee training. No Paradee weight changes are part of
    this gate.
+
+## Reproduce the first audition
+
+Split the reference into a matching passage and a separate held-out passage,
+with an exact UTF-8 transcript for each. Keep the recordings and generated
+audio outside Git. Then run:
+
+```powershell
+.\.cache\voice-lab-venv\Scripts\python.exe .\experiments\voice-blend\rank-blends.py `
+  --reference .\.cache\voice-reference\match.wav `
+  --transcript .\.cache\voice-reference\match.txt `
+  --out .\build\voice-blend\reference
+
+.\.cache\voice-lab-venv\Scripts\python.exe .\experiments\voice-blend\evaluate-holdout.py `
+  --reference .\.cache\voice-reference\holdout.wav `
+  --transcript .\.cache\voice-reference\holdout.txt `
+  --ranking .\build\voice-blend\reference\ranking.json
+```
+
+The first script renders all 28 English voices, then nine blends among the
+three highest-scoring voices in one voice family. The second renders four
+finalists plus two stock comparisons on the unused passage. Scores are cosine
+similarities from a speaker embedding model; they can vary with wording and
+delivery. Listen before selecting a recipe. These WAVs are Kokoro previews,
+not trained Paradee voices.
