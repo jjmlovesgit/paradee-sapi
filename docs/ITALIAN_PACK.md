@@ -8,7 +8,7 @@ Paradee-SAPI installer.
 ## Install and try the Italian voices
 
 1. Close Edge and other apps that use SAPI voices.
-2. Run the Italian setup executable and approve the administrator
+2. Run the [Italian 0.2.0 setup executable](https://github.com/jjmlovesgit/paradee-sapi/releases/download/v0.2.0-italian-preview.1/Paradee-SAPI-Italian-0.2.0-x64-Setup.exe) and approve the administrator
    prompt. The installer registers `Paradee if_sara` and `Paradee im_nicola` with Italian language ID
    `0410` and installs to `C:\Program Files\Paradee-SAPI-Italian`.
 3. Fully quit Edge after installation, including its background `msedge.exe`
