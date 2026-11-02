@@ -175,19 +175,12 @@ for a reversible OneCore test.
 
 ## Remaining gates
 
-- A candidate native phonemization change now preserves internal commas,
-  semicolons, colons, and sentence-final punctuation as model input tokens.
-  It also splits longer text before the model's 510-phoneme limit rather than
-  silently truncating it. The standalone renderer and an isolated bridge DLL
-  build pass. The installed SAPI DLL has not been replaced, and the candidate
-  has not yet been heard in Edge. Compare `build/diagnostics/punctuation_installed.wav`
-  (current installed voice) with `build/diagnostics/punctuation_candidate.wav`,
-  then check `build/diagnostics/numbers_candidate.wav` by ear before promoting it.
-  The user heard an improvement in punctuation but found the candidate still
-  sounded word-by-word rather than like a fluent sentence. An A/B render of a
-  longer sentence sounded better through upstream Paradee's Misaki G2P than
-  through the native eSpeak conversion. Keep this candidate out of the installed
-  Edge voice until a native phonemizer passes matched-sentence listening tests.
+- The installed native build now preserves internal commas, semicolons, colons,
+  and sentence-final punctuation as model input tokens. It splits longer text
+  before the model's 510-phoneme limit rather than silently truncating it.
+  After installation, the user reported substantially better Edge Read Aloud
+  phrasing on real webpages. Matched-sentence listening still found upstream
+  Paradee more fluent than this eSpeak-based native frontend.
 - The next quality gate is phoneme parity with upstream Misaki for `bm_fable`.
   Upstream uses its British English lexicon and contextual rules with eSpeak
   only as fallback; the current native engine applies a conversion to eSpeak
@@ -197,24 +190,17 @@ for a reversible OneCore test.
   would not reproduce context-dependent pronunciation, stress, and number
   handling; compare phoneme strings and audio on representative sentences
   before choosing a native port design.
-- The first Edge punctuation build was installed and passed direct SAPI playback.
-  On a real webpage the user reported it sounded much better, but clock times
-  such as `2:00 PM`, `2:15 PM`, and `7:00 PM` were read incorrectly. A follow-up
-  candidate normalizes clock times to spoken words before phonemization while
-  retaining ordinary comma and colon handling. Its native renderer and SAPI
-  DLL compile; Edge acceptance still requires installation and user listening.
-- Listen to matched native and upstream `bm_fable` samples and check
-  pronunciation and naturalness. eSpeak plus phoneme conversion may differ
-  from the upstream Python Misaki path.
+- The Edge punctuation build initially read `2:00 PM`, `2:15 PM`, and `7:00 PM`
+  incorrectly. The follow-up native build normalizes clock times to spoken
+  words before phonemization. It was installed at the existing registered DLL
+  path, passed a SAPI render of the time examples, and the user reported the
+  result was excellent in Edge. Continue testing other time formats and
+  numbers on real pages.
 - Test cold and warm latency, stop/pause behavior, sentence boundaries, and
-  longer text in real applications. The current tokenizer caps a synthesis
-  call at 510 phoneme tokens, so long inputs need chunking before acceptance.
-- Improve Edge Read Aloud phrasing: the current SAPI bridge concatenates all
-  SAPI text fragments into one synthesis request and ignores silence actions.
-  The native eSpeak frontend only re-appends punctuation if it is at the end
-  of the whole request. Split into bounded sentences, preserve punctuation
-  and SAPI pauses, and compare audible phrasing with upstream Paradee before
-  treating the voice as reader-ready.
+  longer text in real applications. Long text now chunks before the 510-phoneme
+  limit, but the SAPI bridge still ignores silence actions and some fragment
+  controls. Compare matched passages with upstream Paradee before declaring
+  reading quality complete.
 - Probe SAPI word-boundary events from a Microsoft voice, Kokoro, and Paradee
   in a controlled host. The Paradee ONNX interface returns waveform only;
   its bridge does not call `ISpTTSEngineSite::AddEvents`. Add source-offset and
