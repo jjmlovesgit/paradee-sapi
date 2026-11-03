@@ -5,6 +5,11 @@ applications through SAPI 5 and OneCore voice registration. Speech synthesis
 runs on the CPU, on the device, without a browser extension, background server,
 or cloud TTS request.
 
+Its compact installers, CPU-only operation, and support for multiple offline
+voices make it well suited to small local installations, kiosks, robots,
+air-gapped systems, and other deployments where privacy, limited storage, and
+independence from cloud speech services matter.
+
 ## Download a language pack
 
 | Language | Voices | Offline installer |
