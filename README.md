@@ -108,5 +108,18 @@ currently packages `.exe` installers; it does not build an `.msi`.
 - [SAPI proof and resource measurements](docs/SAPI_PROOF.md)
 - [Third party notices](third_party)
 
+## Upstream projects and acknowledgments
+
+Paradee-SAPI is a Windows integration and packaging project built on the work
+of these upstream creators:
+
+- **[Paradee by Sahil Mahendrakar](https://github.com/sahilmahendrakar/paradee)**
+  provides the tiny neural TTS architecture, training work, and English
+  Paradee v1.2 model used by the English voice pack.
+- **[MithrilMan on Hugging Face](https://huggingface.co/MithrilMan)** provides
+  the teacher-in-the-loop work and Italian student models used for the
+  `if_sara` and `im_nicola` Italian voice pack.
+
 Paradee and its model are published under Apache-2.0. Review the included
-third-party notices for the complete dependency license information.
+[third-party notices](third_party/NOTICES.md) for pinned sources, dependency
+licenses, and complete attribution details.
