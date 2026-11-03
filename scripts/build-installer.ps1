@@ -2,6 +2,7 @@ param([string] $Version = '0.1.0', [switch] $FourVoices)
 
 $ErrorActionPreference = 'Stop'
 $repo = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
+. (Join-Path $PSScriptRoot 'release-integrity.ps1')
 $buildRoot = Join-Path $repo 'build\package'
 $stage = Join-Path $buildRoot 'stage'
 $bridgeOut = Join-Path $buildRoot 'bridge'
@@ -65,39 +66,40 @@ if (-not (Test-Path -LiteralPath (Join-Path $stage 'assets\espeak-ng-data\en_dic
     throw 'eSpeak NG English dictionary is missing from the staged package'
 }
 
-$manifestFiles = @(
-    Get-ChildItem -LiteralPath $stage -Recurse -File | Sort-Object FullName | ForEach-Object {
-        [ordered]@{
-            path = $_.FullName.Substring($stage.Length + 1).Replace('\', '/')
-            bytes = $_.Length
-            sha256 = (Get-FileHash -Algorithm SHA256 -LiteralPath $_.FullName).Hash.ToLowerInvariant()
-        }
-    }
-)
-[ordered]@{ packageVersion = $Version; files = $manifestFiles } |
-    ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $stage 'payload-manifest.json') -Encoding UTF8
-
-$nsisRoot = Join-Path $repo '.cache\nsis'
-$nsisZip = Join-Path $nsisRoot 'nsis-3.12.zip'
-$compiler = Join-Path $nsisRoot 'nsis-3.12\Bin\makensis.exe'
-if (-not (Test-Path -LiteralPath $compiler)) {
-    New-Item -ItemType Directory -Path $nsisRoot -Force | Out-Null
-    if (-not (Test-Path -LiteralPath $nsisZip)) {
-        Invoke-WebRequest -Uri 'https://mse.uk.distfiles.macports.org/nsis/nsis-3.12.zip' -OutFile $nsisZip
-    }
-    $hash = (Get-FileHash -Algorithm SHA256 -LiteralPath $nsisZip).Hash.ToLowerInvariant()
-    if ($hash -ne '56581f90db321581c5381193d796fffcf2d24b2f8fed2160a6c6a3baa67f2c4f') {
-        throw 'NSIS 3.12 archive hash mismatch'
-    }
-    Expand-Archive -LiteralPath $nsisZip -DestinationPath $nsisRoot -Force
-}
-if (-not (Test-Path -LiteralPath $compiler)) { throw "NSIS compiler missing: $compiler" }
 $dist = Join-Path $repo 'dist'
 New-Item -ItemType Directory -Path $dist -Force | Out-Null
 $output = Join-Path $dist "Paradee-SAPI-$Version-x64-Setup.exe"
-$defines = @("/DAPP_VERSION=$Version", "/DSTAGE_DIR=$stage", "/DOUT_FILE=$output")
-if ($FourVoices) { $defines += '/DFOUR_VOICES' }
-& $compiler @defines (Join-Path $repo 'packaging\paradee-sapi.nsi')
-if ($LASTEXITCODE -ne 0) { throw "NSIS build failed: $LASTEXITCODE" }
+$packageStage = New-PrivatePackageStage -SourcePath $stage
+$toolchain = $null
+try {
+    foreach ($entry in $lock.sha256.PSObject.Properties) {
+        $path = Join-Path $packageStage.StagePath ($entry.Name.Replace('/', '\'))
+        Assert-FileSha256 -LiteralPath $path -ExpectedSha256 $entry.Value -Label "private package input $($entry.Name)"
+    }
+    if (-not (Test-Path -LiteralPath (Join-Path $packageStage.StagePath 'assets\espeak-ng-data\en_dict'))) {
+        throw 'eSpeak NG English dictionary is missing from the private package stage'
+    }
+    $manifestFiles = @(
+        Get-ChildItem -LiteralPath $packageStage.StagePath -Recurse -File | Sort-Object FullName | ForEach-Object {
+            [ordered]@{
+                path = $_.FullName.Substring($packageStage.StagePath.Length + 1).Replace('\', '/')
+                bytes = $_.Length
+                sha256 = (Get-FileHash -Algorithm SHA256 -LiteralPath $_.FullName).Hash.ToLowerInvariant()
+            }
+        }
+    )
+    [ordered]@{ packageVersion = $Version; files = $manifestFiles } |
+        ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $packageStage.StagePath 'payload-manifest.json') -Encoding UTF8
+
+    $toolchain = Get-VerifiedNsisCompiler -RepositoryRoot $repo
+    $defines = @("/DAPP_VERSION=$Version", "/DSTAGE_DIR=$($packageStage.StagePath)", "/DOUT_FILE=$output")
+    if ($FourVoices) { $defines += '/DFOUR_VOICES' }
+    Assert-FileSha256 -LiteralPath $toolchain.CompilerPath -ExpectedSha256 $toolchain.CompilerSha256 -Label 'fresh NSIS compiler'
+    & $toolchain.CompilerPath @defines (Join-Path $repo 'packaging\paradee-sapi.nsi')
+    if ($LASTEXITCODE -ne 0) { throw "NSIS build failed: $LASTEXITCODE" }
+} finally {
+    if ($toolchain) { Remove-VerifiedNsisToolchain -Toolchain $toolchain }
+    Remove-PrivatePackageStage -PackageStage $packageStage
+}
 Write-Host "Built offline installer: $output"
 Write-Host "SHA256: $((Get-FileHash -Algorithm SHA256 -LiteralPath $output).Hash)"

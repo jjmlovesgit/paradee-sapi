@@ -9,9 +9,12 @@
 
 #include <algorithm>
 #include <array>
+#include <atomic>
+#include <chrono>
 #include <cmath>
 #include <cstdint>
 #include <cwctype>
+#include <exception>
 #include <fstream>
 #include <iostream>
 #include <memory>
@@ -19,9 +22,71 @@
 #include <regex>
 #include <stdexcept>
 #include <string>
+#include <thread>
 #include <vector>
 
 namespace {
+
+constexpr size_t kMaxSynthesisTextChars = 1024 * 1024;
+constexpr size_t kMaxSynthesisSamples = 24000ULL * 60 * 10;
+constexpr size_t kMaxPhonemizeChars = 1024;
+
+std::vector<std::wstring> BoundedTextChunks(std::wstring text) {
+    std::vector<std::wstring> chunks;
+    while (text.size() > kMaxPhonemizeChars) {
+        size_t cut = text.rfind(L' ', kMaxPhonemizeChars - 1);
+        if (cut == std::wstring::npos || cut == 0) cut = kMaxPhonemizeChars;
+        chunks.push_back(text.substr(0, cut));
+        text.erase(0, cut);
+        while (!text.empty() && std::iswspace(text.front())) text.erase(0, 1);
+    }
+    if (!text.empty()) chunks.push_back(std::move(text));
+    return chunks;
+}
+
+std::vector<Ort::Value> RunWithCancellation(
+    Ort::Session& session, const Ort::RunOptions& synchronous_options,
+    const char* const* input_names, const Ort::Value* inputs, size_t input_count,
+    const char* const* output_names, size_t output_count,
+    const std::function<bool()>& should_cancel) {
+    if (!should_cancel) {
+        return session.Run(synchronous_options, input_names, inputs, input_count,
+                           output_names, output_count);
+    }
+
+    Ort::RunOptions options;
+    std::vector<Ort::Value> outputs;
+    std::exception_ptr run_error;
+    std::atomic<bool> done{false};
+    std::thread worker([&]() {
+        try {
+            outputs = session.Run(options, input_names, inputs, input_count,
+                                  output_names, output_count);
+        } catch (...) {
+            run_error = std::current_exception();
+        }
+        done.store(true, std::memory_order_release);
+    });
+
+    bool cancelled = false;
+    try {
+        while (!done.load(std::memory_order_acquire)) {
+            if (!cancelled && should_cancel()) {
+                cancelled = true;
+                options.SetTerminate();
+            }
+            std::this_thread::sleep_for(std::chrono::milliseconds(5));
+        }
+    } catch (...) {
+        try { options.SetTerminate(); } catch (...) {}
+        worker.join();
+        throw;
+    }
+    worker.join();
+    if (cancelled) return {};
+    if (run_error) std::rethrow_exception(run_error);
+    return outputs;
+}
 
 std::string ToUtf8(const std::wstring& value) {
     if (value.empty()) return {};
@@ -267,14 +332,21 @@ public:
     explicit NativeEngine(const std::wstring& assets)
         : assets_(assets), espeak_(assets), env_(ORT_LOGGING_LEVEL_WARNING, "paradee-native") {}
 
-    std::vector<float> Synthesize(const std::wstring& text, float speed, int voice_index) {
+    std::vector<float> Synthesize(const std::wstring& text, float speed, int voice_index,
+                                  const std::function<bool()>& should_cancel,
+                                  size_t max_samples) {
         if (voice_index < 0 || voice_index > 5) throw std::invalid_argument("Invalid Paradee voice index");
+        if (text.size() > kMaxSynthesisTextChars) throw std::length_error("Synthesis text exceeds limit");
         const bool italian = voice_index == 4 || voice_index == 5;
         if (italian && !is_italian_pack_) throw std::invalid_argument("Italian voice is not available in this package");
         Ort::Session* session = GetSession(voice_index);
+        const size_t sample_limit = max_samples < kMaxSynthesisSamples ? max_samples : kMaxSynthesisSamples;
         std::vector<float> audio;
         for (const auto& sentence : ParadeeSplitSentences(text)) {
-            for (const auto& chunk : PhonemeChunks(espeak_.Phonemize(sentence, voice_index))) {
+          for (const auto& text_chunk : BoundedTextChunks(sentence)) {
+            if (should_cancel && should_cancel()) return audio;
+            for (const auto& chunk : PhonemeChunks(espeak_.Phonemize(text_chunk, voice_index))) {
+                if (should_cancel && should_cancel()) return audio;
                 auto ids = Tokens(chunk);
                 Ort::MemoryInfo cpu = Ort::MemoryInfo::CreateCpu(OrtArenaAllocator, OrtMemTypeDefault);
                 std::array<int64_t, 2> ids_shape{1, static_cast<int64_t>(ids.size())};
@@ -286,10 +358,15 @@ public:
                     };
                     const char* input_names[] = {"input_ids", "speed"};
                     const char* output_names[] = {"waveform"};
-                    auto outputs = session->Run(Ort::RunOptions{nullptr}, input_names, inputs.data(), inputs.size(), output_names, 1);
+                    Ort::RunOptions run_options;
+                    auto outputs = RunWithCancellation(*session, run_options, input_names, inputs.data(), inputs.size(), output_names, 1, should_cancel);
+                    if (outputs.empty()) return audio;
+                    if (should_cancel && should_cancel()) return audio;
                     auto info = outputs[0].GetTensorTypeAndShapeInfo();
                     const float* data = outputs[0].GetTensorData<float>();
-                    audio.insert(audio.end(), data, data + info.GetElementCount());
+                    const size_t count = info.GetElementCount();
+                    if (count > sample_limit - audio.size()) throw std::length_error("Synthesis audio exceeds limit");
+                    audio.insert(audio.end(), data, data + count);
                 } else {
                     int64_t voice = voice_index;
                     std::array<Ort::Value, 3> inputs = {
@@ -299,12 +376,18 @@ public:
                     };
                     const char* input_names[] = {"input_ids", "speed", "voice"};
                     const char* output_names[] = {"waveform"};
-                    auto outputs = session->Run(Ort::RunOptions{nullptr}, input_names, inputs.data(), inputs.size(), output_names, 1);
+                    Ort::RunOptions run_options;
+                    auto outputs = RunWithCancellation(*session, run_options, input_names, inputs.data(), inputs.size(), output_names, 1, should_cancel);
+                    if (outputs.empty()) return audio;
+                    if (should_cancel && should_cancel()) return audio;
                     auto info = outputs[0].GetTensorTypeAndShapeInfo();
                     const float* data = outputs[0].GetTensorData<float>();
-                    audio.insert(audio.end(), data, data + info.GetElementCount());
+                    const size_t count = info.GetElementCount();
+                    if (count > sample_limit - audio.size()) throw std::length_error("Synthesis audio exceeds limit");
+                    audio.insert(audio.end(), data, data + count);
                 }
             }
+          }
         }
         return audio;
     }
@@ -362,7 +445,10 @@ std::vector<std::wstring> ParadeeSplitSentences(const std::wstring& text) {
     return sentences;
 }
 
-std::vector<float> ParadeeSynthesize(const std::wstring& text, const std::wstring& assets_dir, float speed, int voice_index) {
+std::vector<float> ParadeeSynthesize(const std::wstring& text, const std::wstring& assets_dir,
+                                     float speed, int voice_index,
+                                     const std::function<bool()>& should_cancel,
+                                     size_t max_samples) {
     static std::mutex mutex;
     static std::unique_ptr<NativeEngine> engine;
     static std::wstring loaded_dir;
@@ -371,7 +457,7 @@ std::vector<float> ParadeeSynthesize(const std::wstring& text, const std::wstrin
         engine = std::make_unique<NativeEngine>(assets_dir);
         loaded_dir = assets_dir;
     }
-    return engine->Synthesize(text, speed, voice_index);
+    return engine->Synthesize(text, speed, voice_index, should_cancel, max_samples);
 }
 
 #ifndef PARADEE_NATIVE_LIBRARY

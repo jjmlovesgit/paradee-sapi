@@ -21,6 +21,11 @@ Paradee-SAPI installer.
 The setup executable is not code-signed, so Windows may show an unknown
 publisher prompt. Use the checksum published with the installer.
 
+The Italian pack uses the same native request limits and cancellation behavior
+as the English pack. Applications should divide unusually long documents into
+bounded SAPI requests rather than submit more than 1,048,576 UTF-16 characters in
+one `Speak` call.
+
 ## Uninstall
 
 Close Edge and apps using the voice. Select **Windows Settings → Apps →

@@ -2,6 +2,7 @@ param([string] $Version = '0.1.0')
 
 $ErrorActionPreference = 'Stop'
 $repo = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
+. (Join-Path $PSScriptRoot 'release-integrity.ps1')
 $build = Join-Path $repo 'build\italian'
 $native = Join-Path $build 'native'
 $assets = Join-Path $native 'assets'
@@ -63,36 +64,44 @@ Paradee. Source: https://github.com/MithrilMan/teacher-in-the-loop .
 '@ | Add-Content -LiteralPath (Join-Path $stage 'THIRD_PARTY_NOTICES.md') -Encoding UTF8
 Copy-Item (Join-Path $repo 'docs\ITALIAN_PACK.md') (Join-Path $stage 'ITALIAN_PACK.md')
 
-$runtimePaths = @('paradee_sapi_bridge.dll','onnxruntime.dll','msvcp140.dll','msvcp140_1.dll','vcruntime140.dll','vcruntime140_1.dll',
-    'assets/espeak-ng.dll','assets/if_sara-model_int8.onnx','assets/im_nicola-model_int8.onnx')
-$hashes = [ordered]@{}
-foreach ($relative in $runtimePaths) {
-    $path = Join-Path $stage ($relative.Replace('/', '\'))
-    $hashes[$relative] = (Get-FileHash $path -Algorithm SHA256).Hash.ToLowerInvariant()
-}
-$runtime = [ordered]@{
-    package = 'Paradee-SAPI Italian Voice Pack'
-    packageVersion = $Version
-    sourceRepository = $itLock.repository
-    sourceRevision = $itLock.revision
-    voices = $itLock.voices
-    onnxRuntimeVersion = $baseLock.onnxRuntimeVersion
-    eSpeakNgVersion = $baseLock.espeakNgVersion
-    files = $hashes
-}
-$runtime | ConvertTo-Json -Depth 4 | Set-Content (Join-Path $stage 'runtime-lock-italian.json') -Encoding UTF8
-$manifestFiles = @(Get-ChildItem $stage -Recurse -File | Sort-Object FullName | ForEach-Object {
-    [ordered]@{ path = $_.FullName.Substring($stage.Length + 1).Replace('\','/'); bytes = $_.Length; sha256 = (Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant() }
-})
-[ordered]@{ packageVersion = $Version; language = 'it-IT'; files = $manifestFiles } |
-    ConvertTo-Json -Depth 5 | Set-Content (Join-Path $stage 'payload-manifest.json') -Encoding UTF8
-
-$nsis = Join-Path $repo '.cache\nsis\nsis-3.12\Bin\makensis.exe'
-if (-not (Test-Path $nsis)) { throw "NSIS compiler is missing: $nsis" }
 $dist = Join-Path $repo 'dist'
 New-Item -ItemType Directory -Path $dist -Force | Out-Null
 $output = Join-Path $dist "Paradee-SAPI-Italian-$Version-x64-Setup.exe"
-& $nsis "/DAPP_VERSION=$Version" "/DSTAGE_DIR=$stage" "/DOUT_FILE=$output" (Join-Path $repo 'packaging\paradee-sapi-italian.nsi')
-if ($LASTEXITCODE -ne 0) { throw "Italian NSIS build failed: $LASTEXITCODE" }
+$packageStage = New-PrivatePackageStage -SourcePath $stage
+$toolchain = $null
+try {
+    Assert-ItalianPackageInputs -StagePath $packageStage.StagePath -BaseLock $baseLock -ItalianLock $itLock
+    $runtimePaths = @('paradee_sapi_bridge.dll','onnxruntime.dll','msvcp140.dll','msvcp140_1.dll','vcruntime140.dll','vcruntime140_1.dll',
+        'assets/espeak-ng.dll','assets/if_sara-model_int8.onnx','assets/im_nicola-model_int8.onnx')
+    $hashes = [ordered]@{}
+    foreach ($relative in $runtimePaths) {
+        $path = Join-Path $packageStage.StagePath ($relative.Replace('/', '\'))
+        $hashes[$relative] = (Get-FileHash $path -Algorithm SHA256).Hash.ToLowerInvariant()
+    }
+    $runtime = [ordered]@{
+        package = 'Paradee-SAPI Italian Voice Pack'
+        packageVersion = $Version
+        sourceRepository = $itLock.repository
+        sourceRevision = $itLock.revision
+        voices = $itLock.voices
+        onnxRuntimeVersion = $baseLock.onnxRuntimeVersion
+        eSpeakNgVersion = $baseLock.espeakNgVersion
+        files = $hashes
+    }
+    $runtime | ConvertTo-Json -Depth 4 | Set-Content (Join-Path $packageStage.StagePath 'runtime-lock-italian.json') -Encoding UTF8
+    $manifestFiles = @(Get-ChildItem $packageStage.StagePath -Recurse -File | Sort-Object FullName | ForEach-Object {
+        [ordered]@{ path = $_.FullName.Substring($packageStage.StagePath.Length + 1).Replace('\','/'); bytes = $_.Length; sha256 = (Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant() }
+    })
+    [ordered]@{ packageVersion = $Version; language = 'it-IT'; files = $manifestFiles } |
+        ConvertTo-Json -Depth 5 | Set-Content (Join-Path $packageStage.StagePath 'payload-manifest.json') -Encoding UTF8
+
+    $toolchain = Get-VerifiedNsisCompiler -RepositoryRoot $repo
+    Assert-FileSha256 -LiteralPath $toolchain.CompilerPath -ExpectedSha256 $toolchain.CompilerSha256 -Label 'fresh NSIS compiler'
+    & $toolchain.CompilerPath "/DAPP_VERSION=$Version" "/DSTAGE_DIR=$($packageStage.StagePath)" "/DOUT_FILE=$output" (Join-Path $repo 'packaging\paradee-sapi-italian.nsi')
+    if ($LASTEXITCODE -ne 0) { throw "Italian NSIS build failed: $LASTEXITCODE" }
+} finally {
+    if ($toolchain) { Remove-VerifiedNsisToolchain -Toolchain $toolchain }
+    Remove-PrivatePackageStage -PackageStage $packageStage
+}
 Write-Host "Built offline Italian installer: $output"
 Write-Host "SHA256: $((Get-FileHash $output -Algorithm SHA256).Hash)"

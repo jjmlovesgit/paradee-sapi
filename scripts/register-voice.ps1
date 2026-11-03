@@ -12,6 +12,10 @@ $clsidKey = "$registryRoot\SOFTWARE\Classes\CLSID\$clsid"
 $voiceKey = "$registryRoot\SOFTWARE\Microsoft\Speech\Voices\Tokens\$tokenName"
 $oneCoreKey = "$registryRoot\SOFTWARE\Microsoft\Speech_OneCore\Voices\Tokens\$tokenName"
 
+if ($Scope -eq 'LocalMachine' -and -not $Uninstall) {
+    throw 'Machine-wide development registration from a writable checkout is disabled. Build and run the Windows installer instead.'
+}
+
 if ($Scope -eq 'LocalMachine') {
     $principal = [Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()
     if (-not $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {

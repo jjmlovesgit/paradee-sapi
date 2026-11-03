@@ -1,5 +1,7 @@
 #pragma once
 
+#include <functional>
+#include <limits>
 #include <string>
 #include <vector>
 
@@ -9,7 +11,9 @@ std::vector<float> ParadeeSynthesize(
     const std::wstring& text,
     const std::wstring& assets_dir,
     float speed,
-    int voice_index = 3);
+    int voice_index = 3,
+    const std::function<bool()>& should_cancel = {},
+    size_t max_samples = (std::numeric_limits<size_t>::max)());
 
 // Keep sentence-final punctuation with the text sent to the model.
 std::vector<std::wstring> ParadeeSplitSentences(const std::wstring& text);

@@ -57,6 +57,12 @@ Edge word highlighting works. Chrome Reading mode and Discord did not select
 Paradee in recorded tests. Other Windows apps need individual compatibility
 tests.
 
+To keep a malformed or unexpectedly large SAPI request from monopolizing its
+host process, the native engine rejects a single `Speak` call over 1,048,576
+UTF-16 characters, caps generated audio, and observes cancellation between
+model chunks. Reading applications should submit longer documents in bounded
+segments, as Edge and other interactive readers normally do.
+
 ## Troubleshooting
 
 - **Voice missing in Edge:** fully exit Edge, reopen it, then inspect Voice

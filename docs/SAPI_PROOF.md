@@ -39,12 +39,14 @@ voice:
 .\build\native\paradee_native.exe "Paradee can read this text privately on this computer." build\native\bm_fable_native.wav build\native\assets
 ```
 
-Machine-wide registration requires an elevated PowerShell session. The script
-registers both classic SAPI and OneCore tokens; it does not change the Windows
-default voice.
+Machine-wide registration is installer-only. Earlier prototypes registered a
+DLL directly from the writable checkout, but the development script now refuses
+that unsafe configuration. Build and run the installer to test classic SAPI and
+OneCore discovery without changing the Windows default voice.
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\register-voice.ps1 -Scope LocalMachine
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\build-installer.ps1 -Version 0.2.1 -FourVoices
+.\dist\Paradee-SAPI-0.2.1-x64-Setup.exe
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-sapi.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\measure-sapi.ps1
 ```

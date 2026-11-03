@@ -24,6 +24,7 @@
 #include <algorithm>
 #include <cstdint>
 #include <string>
+#include <stdexcept>
 #include <vector>
 #include <cstdio>
 #include <cstdlib>
@@ -297,6 +298,9 @@ static bool ShouldAbort(ISpTTSEngineSite *site) {
     return (site->GetActions() & SPVES_ABORT) != 0;
 }
 
+constexpr size_t kMaxSpeakTextChars = 1024 * 1024;
+constexpr ULONGLONG kMaxSpeakAudioBytes = 24000ULL * sizeof(int16_t) * 60 * 30;
+
 static float ClampSpeed(float speed) {
     if (speed < 0.25f) return 0.25f;
     if (speed > 4.0f) return 4.0f;
@@ -516,7 +520,12 @@ STDMETHODIMP CHttpSapi5Engine::Speak(
 
     std::wstring text;
     for (auto *f = pText; f; f = f->pNext) {
-        if (f->pTextStart && f->ulTextLen) text.append(f->pTextStart, f->ulTextLen);
+        if (!f->pTextStart || !f->ulTextLen) continue;
+        if (f->ulTextLen > kMaxSpeakTextChars - text.size()) {
+            Log(L"Speak rejected text over limit");
+            return HRESULT_FROM_WIN32(ERROR_BUFFER_OVERFLOW);
+        }
+        text.append(f->pTextStart, f->ulTextLen);
     }
     Log(L"Speak textLen=" + std::to_wstring(text.size()));
     if (text.empty()) return S_OK;
@@ -563,14 +572,25 @@ STDMETHODIMP CHttpSapi5Engine::Speak(
         textCursor = textStart + sentence.size();
         std::vector<unsigned char> pcm;
         try {
-            auto audio = ParadeeSynthesize(sentence, m_assetsDir, effectiveSpeed, m_voiceIndex);
+            const size_t remainingSamples = static_cast<size_t>((kMaxSpeakAudioBytes - audioOffset) / sizeof(int16_t));
+            auto audio = ParadeeSynthesize(sentence, m_assetsDir, effectiveSpeed, m_voiceIndex,
+                [pOut]() { return ShouldAbort(pOut); }, remainingSamples);
+            if (ShouldAbort(pOut)) return S_OK;
+            if (audio.size() > (kMaxSpeakAudioBytes - audioOffset) / sizeof(int16_t)) {
+                Log(L"Speak rejected audio over limit");
+                return HRESULT_FROM_WIN32(ERROR_BUFFER_OVERFLOW);
+            }
             pcm.resize(audio.size() * sizeof(int16_t));
             for (size_t i = 0; i < audio.size(); ++i) {
                 auto sample = static_cast<int16_t>(std::clamp(audio[i], -1.0f, 1.0f) * 32767);
                 memcpy(pcm.data() + i * sizeof(int16_t), &sample, sizeof(sample));
             }
+        } catch (const std::length_error&) {
+            Log(L"Speak native synthesis exceeded resource limit");
+            return HRESULT_FROM_WIN32(ERROR_BUFFER_OVERFLOW);
         } catch (const std::exception& error) {
-            Log(L"Speak native synthesis failed");
+            const std::string message(error.what());
+            Log(L"Speak native synthesis failed: " + std::wstring(message.begin(), message.end()));
             return E_FAIL;
         }
         const auto events = BoundaryEvents(pText, sentence, textStart,

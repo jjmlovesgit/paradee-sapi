@@ -164,6 +164,11 @@ SectionEnd
 
 Function un.onInit
   SetRegView 64
+  ReadRegStr $0 HKLM "${UNINSTALL_KEY}" "InstallLocation"
+  StrCmp $0 "$INSTDIR" uninstall_location_ok
+  MessageBox MB_ICONSTOP "The installed Paradee-SAPI Italian location does not match this uninstaller. Nothing was removed."
+  Abort
+uninstall_location_ok:
   ReadRegStr $0 HKCU "SOFTWARE\Microsoft\Speech\Voices" "DefaultTokenId"
   StrCmp $0 "HKEY_LOCAL_MACHINE\${SAPI_KEY}" 0 +3
     MessageBox MB_ICONSTOP "Paradee if_sara is your default voice. Select another default before uninstalling."
