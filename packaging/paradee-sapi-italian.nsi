@@ -1,3 +1,5 @@
+!include "MUI2.nsh"
+
 !ifndef APP_VERSION
   !error "APP_VERSION is required"
 !endif
@@ -32,8 +34,19 @@ ShowUninstDetails show
 VIProductVersion "${APP_VERSION}.0"
 VIAddVersionKey "ProductName" "${APP_NAME}"
 VIAddVersionKey "ProductVersion" "${APP_VERSION}"
+VIAddVersionKey "FileVersion" "${APP_VERSION}"
 VIAddVersionKey "FileDescription" "Offline Italian SAPI voice setup"
 VIAddVersionKey "CompanyName" "Paradee-SAPI contributors"
+VIAddVersionKey "LegalCopyright" "Copyright Paradee-SAPI contributors and upstream authors"
+
+; Use the same Windows-standard Modern UI pages and colors as the English pack.
+!define MUI_INSTFILESPAGE_COLORS /windows
+!insertmacro MUI_PAGE_WELCOME
+!insertmacro MUI_PAGE_INSTFILES
+!insertmacro MUI_PAGE_FINISH
+!insertmacro MUI_UNPAGE_CONFIRM
+!insertmacro MUI_UNPAGE_INSTFILES
+!insertmacro MUI_LANGUAGE "English"
 
 Function .onInit
   SetRegView 64

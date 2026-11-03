@@ -96,6 +96,8 @@ VIAddVersionKey "FileDescription" "Offline Paradee SAPI voice setup"
 VIAddVersionKey "CompanyName" "Paradee-SAPI contributors"
 VIAddVersionKey "LegalCopyright" "Copyright Paradee-SAPI contributors and upstream authors"
 
+; Keep the installation details pane aligned with standard Windows colors.
+!define MUI_INSTFILESPAGE_COLORS /windows
 !insertmacro MUI_PAGE_WELCOME
 !insertmacro MUI_PAGE_INSTFILES
 !insertmacro MUI_PAGE_FINISH
